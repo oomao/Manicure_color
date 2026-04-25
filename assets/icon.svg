@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="美甲調色">
+  <defs>
+    <!-- Warm cream background gradient -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FBF3EC"/>
+      <stop offset="100%" stop-color="#F4E6DA"/>
+    </linearGradient>
+
+    <!-- Rose-gold droplet gradient -->
+    <linearGradient id="drop" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%"  stop-color="#E6A38C"/>
+      <stop offset="45%" stop-color="#C99178"/>
+      <stop offset="100%" stop-color="#A35A6A"/>
+    </linearGradient>
+
+    <!-- Subtle inner shadow on droplet -->
+    <radialGradient id="shade" cx="0.65" cy="0.7" r="0.7">
+      <stop offset="60%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#5A2738" stop-opacity="0.22"/>
+    </radialGradient>
+
+    <!-- Highlight on droplet -->
+    <radialGradient id="hl" cx="0.35" cy="0.3" r="0.35">
+      <stop offset="0%" stop-color="#FFF" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="#FFF" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#FFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Accent dot gradient (pink) -->
+    <radialGradient id="dot" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0%" stop-color="#F2C2CF"/>
+      <stop offset="100%" stop-color="#C25B7C"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#bg)"/>
+
+  <!-- Soft circular halo behind droplet -->
+  <circle cx="512" cy="540" r="340" fill="#FCE7EE" opacity="0.55"/>
+
+  <!-- Main droplet (organic teardrop) -->
+  <g transform="translate(512 532)">
+    <!-- Teardrop path: pointed top, round bottom -->
+    <path d="
+      M 0 -260
+      C 130 -160, 240 -40, 240 90
+      C 240 240, 130 330, 0 330
+      C -130 330, -240 240, -240 90
+      C -240 -40, -130 -160, 0 -260
+      Z"
+      fill="url(#drop)"/>
+    <!-- Inner shading -->
+    <path d="
+      M 0 -260
+      C 130 -160, 240 -40, 240 90
+      C 240 240, 130 330, 0 330
+      C -130 330, -240 240, -240 90
+      C -240 -40, -130 -160, 0 -260
+      Z"
+      fill="url(#shade)"/>
+    <!-- Highlight -->
+    <ellipse cx="-70" cy="-80" rx="115" ry="170" fill="url(#hl)" transform="rotate(-18 -70 -80)"/>
+  </g>
+
+  <!-- Tiny accent palette dot (rose pink) bottom-right of droplet -->
+  <circle cx="720" cy="760" r="58" fill="url(#dot)"/>
+  <circle cx="720" cy="760" r="58" fill="none" stroke="#FFF" stroke-opacity="0.55" stroke-width="4"/>
+</svg>

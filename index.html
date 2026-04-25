@@ -8,9 +8,13 @@
 <meta name="apple-mobile-web-app-title" content="美甲調色">
 <meta name="theme-color" content="#FAFAFA">
 <title>美甲調色</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
 <script src="https://scrtwpns.com/mixbox.js"></script>
-<link rel="stylesheet" href="styles.css?v=10">
-<script src="js/theme.js?v=10"></script>
+<link rel="stylesheet" href="styles.css?v=11">
+<script src="js/theme.js?v=11"></script>
 </head>
 <body>
 <main>
@@ -213,11 +217,12 @@
           新增
         </button>
       </div>
-      <div class="lib-toolbar plans-date-toolbar" style="margin-top:-2px;">
-        <input type="date" class="input plans-date-input" id="plansDateFrom" placeholder="起">
-        <span class="hint" style="margin:0;">~</span>
-        <input type="date" class="input plans-date-input" id="plansDateTo" placeholder="迄">
-        <button class="btn btn-ghost" id="plansDateClear" type="button" style="font-size:12px;padding:4px 8px;">清除</button>
+      <div class="plans-date-toolbar" style="margin-bottom:10px;">
+        <span class="plans-date-label">起</span>
+        <input type="date" class="input plans-date-input" id="plansDateFrom">
+        <span class="plans-date-label">迄</span>
+        <input type="date" class="input plans-date-input" id="plansDateTo">
+        <button class="btn btn-ghost" id="plansDateClear" type="button">清除</button>
       </div>
       <div id="plansSections"></div>
       <div class="empty lib-empty" id="plansEmpty"></div>
@@ -238,11 +243,12 @@
           新增
         </button>
       </div>
-      <div class="lib-toolbar plans-date-toolbar" style="margin-top:-2px;">
-        <input type="date" class="input plans-date-input" id="worksDateFrom" placeholder="起">
-        <span class="hint" style="margin:0;">~</span>
-        <input type="date" class="input plans-date-input" id="worksDateTo" placeholder="迄">
-        <button class="btn btn-ghost" id="worksDateClear" type="button" style="font-size:12px;padding:4px 8px;">清除</button>
+      <div class="plans-date-toolbar" style="margin-bottom:10px;">
+        <span class="plans-date-label">起</span>
+        <input type="date" class="input plans-date-input" id="worksDateFrom">
+        <span class="plans-date-label">迄</span>
+        <input type="date" class="input plans-date-input" id="worksDateTo">
+        <button class="btn btn-ghost" id="worksDateClear" type="button">清除</button>
       </div>
       <div class="lib-grid" id="worksGrid"></div>
       <div class="empty lib-empty" id="worksEmpty"></div>
@@ -1024,16 +1030,16 @@
   </div>
 </div>
 
-<script src="js/calibration.js?v=10"></script>
-<script src="js/media-db.js?v=10"></script>
-<script src="js/img-utils.js?v=10"></script>
-<script src="js/cat-manager.js?v=10"></script>
-<script src="js/materials.js?v=10"></script>
-<script src="js/gallery.js?v=10"></script>
-<script src="js/works.js?v=10"></script>
-<script src="js/plans.js?v=10"></script>
-<script src="js/inspire-picker.js?v=10"></script>
-<script src="js/calendar.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="js/calibration.js?v=11"></script>
+<script src="js/media-db.js?v=11"></script>
+<script src="js/img-utils.js?v=11"></script>
+<script src="js/cat-manager.js?v=11"></script>
+<script src="js/materials.js?v=11"></script>
+<script src="js/gallery.js?v=11"></script>
+<script src="js/works.js?v=11"></script>
+<script src="js/plans.js?v=11"></script>
+<script src="js/inspire-picker.js?v=11"></script>
+<script src="js/calendar.js?v=11"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>
