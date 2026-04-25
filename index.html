@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#FAFAFA">
 <title>美甲調色</title>
 <script src="https://scrtwpns.com/mixbox.js"></script>
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 <main>
@@ -234,12 +234,17 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
           新增靈感
         </button>
+        <button class="btn btn-ghost" id="worksAddBtn" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
+          新增作品
+        </button>
       </div>
     </div>
 
     <div class="tabs lib-segmented">
       <button class="tabs-btn active" data-libtab="materials">材料</button>
       <button class="tabs-btn" data-libtab="gallery">靈感</button>
+      <button class="tabs-btn" data-libtab="works">作品</button>
     </div>
 
     <!-- Sub-pane: 材料 -->
@@ -263,6 +268,12 @@
       <div class="lib-chips" id="galChipsStyle"></div>
       <div class="lib-grid" id="galGrid"></div>
       <div class="empty lib-empty" id="galEmpty"></div>
+    </div>
+
+    <!-- Sub-pane: 作品 -->
+    <div class="lib-pane" id="lib-pane-works" hidden>
+      <div class="lib-grid" id="worksGrid"></div>
+      <div class="empty lib-empty" id="worksEmpty"></div>
     </div>
   </section>
 
@@ -674,12 +685,73 @@
   </div>
 </div>
 
-<script src="media-db.js?v=2"></script>
-<script src="img-utils.js?v=2"></script>
-<script src="cat-manager.js?v=2"></script>
-<script src="materials.js?v=2"></script>
-<script src="gallery.js?v=2"></script>
-<script src="inspire-picker.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<!-- ============ MODAL: 作品(新增/編輯) ============ -->
+<div class="modal-overlay" id="workEditModal" hidden>
+  <div class="modal" style="max-width: 540px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="workEditTitleH">新增作品</h2>
+      <button class="icon-btn" id="workEditClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="lib-preview" id="workCoverPreview">
+        <div class="lib-preview-empty">點下方「選擇封面照」</div>
+      </div>
+      <label class="btn btn-secondary btn-block" for="workCoverFile" style="margin-top:10px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        選擇封面照(成品照)
+      </label>
+      <input type="file" id="workCoverFile" accept="image/*">
+
+      <div class="field" style="margin-top:14px;">
+        <label class="field-label">標題</label>
+        <input type="text" class="input" id="workTitle" maxlength="40" placeholder="例:客戶 A 春日法式漸層">
+      </div>
+      <div class="field">
+        <label class="field-label">日期</label>
+        <input type="date" class="input" id="workDate">
+      </div>
+      <div class="field">
+        <label class="field-label">整體備註(選填)</label>
+        <textarea class="input" id="workNote" rows="2" maxlength="500" placeholder="例:這次嘗試的整體配色方向、客戶喜好、心得..."></textarea>
+      </div>
+
+      <h4 class="work-section-title">步驟</h4>
+      <div id="workStepsList"></div>
+      <button class="btn btn-secondary btn-block" id="workAddStepBtn" type="button" style="margin-top:8px;">+ 新增步驟</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="workEditDelete" hidden>刪除</button>
+      <button class="btn btn-secondary" id="workEditCancel">取消</button>
+      <button class="btn btn-primary" id="workEditSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: 作品詳細 ============ -->
+<div class="modal-overlay" id="workDetailModal" hidden>
+  <div class="modal" style="max-width: 540px;">
+    <div class="modal-header">
+      <h2 class="modal-title">作品紀錄</h2>
+      <button class="icon-btn" id="workDetailClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="workDetailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-block" id="workDetailEdit">編輯</button>
+    </div>
+  </div>
+</div>
+
+<script src="media-db.js?v=3"></script>
+<script src="img-utils.js?v=3"></script>
+<script src="cat-manager.js?v=3"></script>
+<script src="materials.js?v=3"></script>
+<script src="gallery.js?v=3"></script>
+<script src="works.js?v=3"></script>
+<script src="inspire-picker.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

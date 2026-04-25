@@ -6,11 +6,12 @@
    ============================================================================= */
 (function () {
   const DB_NAME = 'nail-mixer-media';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
 
   const STORE_MAT = 'materials';
   const STORE_GAL = 'galleryImages';
   const STORE_DEF = 'categoryDefs';
+  const STORE_WORK = 'works';
 
   let _db = null;
 
@@ -36,6 +37,10 @@
         }
         if (!db.objectStoreNames.contains(STORE_DEF)) {
           db.createObjectStore(STORE_DEF, { keyPath: 'key' });
+        }
+        if (!db.objectStoreNames.contains(STORE_WORK)) {
+          const s = db.createObjectStore(STORE_WORK, { keyPath: 'id' });
+          s.createIndex('by-updatedAt', 'updatedAt', { unique: false });
         }
       };
     });
@@ -133,7 +138,7 @@
 
   window.MediaDB = {
     init,
-    STORE_MAT, STORE_GAL, STORE_DEF,
+    STORE_MAT, STORE_GAL, STORE_DEF, STORE_WORK,
     add, put, get, del, getAll, count,
     getCategoryDef, setCategoryDef,
     storageEstimate,

@@ -242,29 +242,34 @@ async function initLibraryOnce() {
   // 子頁切換永遠綁定(不管 DB 成功與否)
   if (!_libraryInited) {
     const segBtns = document.querySelectorAll('.lib-segmented .tabs-btn');
-    const paneMat = document.getElementById('lib-pane-materials');
-    const paneGal = document.getElementById('lib-pane-gallery');
-    const matAdd  = document.getElementById('matAddBtn');
-    const galAdd  = document.getElementById('galAddBtn');
+    const paneMat   = document.getElementById('lib-pane-materials');
+    const paneGal   = document.getElementById('lib-pane-gallery');
+    const paneWorks = document.getElementById('lib-pane-works');
+    const matAdd   = document.getElementById('matAddBtn');
+    const galAdd   = document.getElementById('galAddBtn');
+    const worksAdd = document.getElementById('worksAddBtn');
     const libTitle = document.getElementById('libTitle');
+    const titles = { materials: '材料庫', gallery: '美甲靈感', works: '作品紀錄' };
     function showSub(name) {
       segBtns.forEach(b => b.classList.toggle('active', b.dataset.libtab === name));
-      const isMat = name === 'materials';
-      paneMat.hidden = !isMat;
-      paneGal.hidden = isMat;
-      matAdd.hidden  = !isMat;
-      galAdd.hidden  = isMat;
-      libTitle.textContent = isMat ? '材料庫' : '美甲靈感';
+      paneMat.hidden   = name !== 'materials';
+      paneGal.hidden   = name !== 'gallery';
+      paneWorks.hidden = name !== 'works';
+      matAdd.hidden    = name !== 'materials';
+      galAdd.hidden    = name !== 'gallery';
+      worksAdd.hidden  = name !== 'works';
+      libTitle.textContent = titles[name] || '圖庫';
     }
     segBtns.forEach(b => b.addEventListener('click', () => showSub(b.dataset.libtab)));
     showSub('materials');
     _libraryInited = true;
 
-    // DB + 兩個子頁初始化(一次)
+    // DB + 三個子頁初始化(一次)
     try {
       await MediaDB.init();
       await Materials.init();
       await Gallery.init();
+      await Works.init();
     } catch (err) {
       console.warn('Library init failed', err);
       const grid = document.getElementById('matGrid');
