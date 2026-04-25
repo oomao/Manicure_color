@@ -3,20 +3,81 @@
    IG-style minimal palette + responsive layout
    ============================================================================= */
 
-:root {
-  --bg:           #FAFAFA;
+/* =============================================================================
+   主題色票 — 美甲沙龍美感(暖米 + 玫瑰金)
+   light:乳白底 + 玫瑰調 + 暖灰
+   dark:深紫黑 + 暖粉 + 玫瑰金
+   ============================================================================= */
+:root, [data-theme="light"] {
+  --bg:           #FAF6F2;   /* 暖米色 */
+  --bg-2:         #F4ECE7;   /* 略深的米 */
   --surface:      #FFFFFF;
-  --text:         #262626;
-  --text-2:       #8E8E8E;
-  --text-3:       #C7C7C7;
-  --border:       #DBDBDB;
-  --border-soft:  #EFEFEF;
-  --accent:       #ED4956;
-  --link:         #0095F6;
-  --link-hover:   #1877F2;
-  --success:      #2ECC71;
-  --warning:      #F39C12;
-  --danger:       #ED4956;
+  --surface-2:    #FBF6F3;   /* 卡片次層 */
+  --text:         #2B2128;   /* 暖深紫炭 */
+  --text-2:       #897784;   /* 帶粉的灰 */
+  --text-3:       #C9B8C0;   /* 淺粉灰 */
+  --border:       #ECDFE0;
+  --border-soft:  #F5EBE9;
+  --accent:       #C25B7C;   /* 玫瑰主色 */
+  --accent-soft:  #FCE7EE;   /* 玫瑰背景 */
+  --rose-gold:    #C99178;   /* 玫瑰金 */
+  --link:         #B26B7A;
+  --link-hover:   #C25B7C;
+  --success:      #7FB069;
+  --warning:      #E0A458;
+  --danger:       #D14D5E;
+  --shadow-sm:    0 1px 2px rgba(75, 50, 60, 0.06);
+  --shadow-md:    0 4px 14px rgba(75, 50, 60, 0.08);
+  --shadow-lg:    0 12px 32px rgba(75, 50, 60, 0.12);
+}
+
+[data-theme="dark"] {
+  --bg:           #18141A;
+  --bg-2:         #221C24;
+  --surface:      #221C24;
+  --surface-2:    #2B232E;
+  --text:         #F2EAEC;
+  --text-2:       #B5A4AC;
+  --text-3:       #6E5F66;
+  --border:       #3A2E36;
+  --border-soft:  #2D2329;
+  --accent:       #E89BAA;
+  --accent-soft:  #3A2730;
+  --rose-gold:    #D9A98E;
+  --link:         #E89BAA;
+  --link-hover:   #F2B5C0;
+  --success:      #88C880;
+  --warning:      #F0B770;
+  --danger:       #E96B7C;
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:    0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-lg:    0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* 自動模式:跟隨系統 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg:           #18141A;
+    --bg-2:         #221C24;
+    --surface:      #221C24;
+    --surface-2:    #2B232E;
+    --text:         #F2EAEC;
+    --text-2:       #B5A4AC;
+    --text-3:       #6E5F66;
+    --border:       #3A2E36;
+    --border-soft:  #2D2329;
+    --accent:       #E89BAA;
+    --accent-soft:  #3A2730;
+    --rose-gold:    #D9A98E;
+    --link:         #E89BAA;
+    --link-hover:   #F2B5C0;
+    --success:      #88C880;
+    --warning:      #F0B770;
+    --danger:       #E96B7C;
+    --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md:    0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-lg:    0 12px 32px rgba(0, 0, 0, 0.5);
+  }
 }
 
 *, *::before, *::after {
@@ -103,7 +164,7 @@ input[type="file"] { display: none; }
 .input, .select {
   width: 100%;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
@@ -416,14 +477,16 @@ canvas {
 .tabbar {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  background: rgba(255,255,255,0.96);
+  background: var(--surface);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-top: 1px solid var(--border-soft);
   display: flex;
   z-index: 50;
   padding-bottom: env(safe-area-inset-bottom, 0);
+  box-shadow: 0 -2px 12px rgba(75, 50, 60, 0.04);
 }
+[data-theme="dark"] .tabbar { box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.3); }
 .tabbar-btn {
   flex: 1;
   background: transparent;
@@ -463,8 +526,8 @@ canvas {
 }
 .modal-overlay[hidden] { display: none; }
 .modal {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--surface);
+  border-radius: 18px;
   width: 100%;
   max-width: 420px;
   max-height: calc(100vh - 32px);
@@ -2042,9 +2105,9 @@ details > div p:last-child { margin-bottom: 0; }
   font-weight: 600;
   letter-spacing: 0.3px;
 }
-.plan-status-draft     { background: #f0f0f0; color: var(--text-2); }
-.plan-status-active    { background: #FEEAEC; color: var(--accent); }
-.plan-status-completed { background: #E8F5E9; color: #2E7D32; }
+.plan-status-draft     { background: var(--bg-2); color: var(--text-2); }
+.plan-status-active    { background: var(--accent-soft); color: var(--accent); }
+.plan-status-completed { background: rgba(127, 176, 105, 0.15); color: var(--success); }
 .plan-meta-rest { color: var(--text-2); }
 
 /* 計劃編輯:靈感多選 grid */
@@ -2136,3 +2199,127 @@ details > div p:last-child { margin-bottom: 0; }
 
 /* 計劃 detail footer 三顆按鈕 */
 .plan-detail-footer .btn { flex: 1; }
+
+/* =============================================================================
+   我的 view — 卡片 / 主題切換 / 入口
+   ============================================================================= */
+.me-card {
+  padding: 14px 16px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-soft);
+}
+.me-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.me-card-icon { font-size: 18px; line-height: 1; }
+.me-card-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
+
+/* 主題切換 3 顆按鈕 */
+.theme-switcher {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: var(--bg-2);
+  padding: 4px;
+  border-radius: 12px;
+}
+.theme-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  font-family: inherit;
+  transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+.theme-btn:active { transform: scale(0.96); }
+.theme-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+.theme-btn-emoji { font-size: 18px; line-height: 1; }
+
+/* 我的 view 的入口卡片(基底色 / 碼表) */
+.me-entry-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  cursor: pointer;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.me-entry-card:active {
+  transform: scale(0.99);
+  box-shadow: var(--shadow-md);
+}
+.me-entry-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.me-entry-icon svg { width: 22px; height: 22px; }
+.me-entry-info { flex: 1; min-width: 0; }
+.me-entry-info .title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.me-entry-info .sub {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.me-entry-arrow { color: var(--text-3); flex-shrink: 0; }
+
+/* 視圖標頭 — 帶返回按鈕版本 */
+.view-header-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.back-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
+.back-btn:active { background: var(--bg-2); }
+.view-header-back h1 { flex: 1; }
+
+/* 紀錄 view — segmented control 縮一點 */
+.record-segmented { margin-bottom: 14px; }
+
+/* 卡片整體稍微圓潤一點 */
+.card {
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 大標題質感調整 — 微微增加字距,更精緻 */
+.view-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}

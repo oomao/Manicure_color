@@ -220,7 +220,7 @@ function escapeHtml(s) {
 const tabbarBtns = document.querySelectorAll('.tabbar-btn');
 const views = {
   mix:     document.getElementById('view-mix'),
-  saved:   document.getElementById('view-saved'),
+  record:  document.getElementById('view-record'),
   bases:   document.getElementById('view-bases'),
   library: document.getElementById('view-library'),
   me:      document.getElementById('view-me'),
@@ -229,49 +229,112 @@ function switchView(name) {
   Object.entries(views).forEach(([k, el]) => { if (el) el.hidden = (k !== name); });
   tabbarBtns.forEach(b => b.classList.toggle('active', b.dataset.view === name));
   if (name === 'bases') renderBases();
-  if (name === 'saved') renderSaved();
+  if (name === 'record' && typeof initRecordOnce === 'function') initRecordOnce();
   if (name === 'mix' && typeof renderHero === 'function') renderHero();
   if (name === 'library' && typeof initLibraryOnce === 'function') initLibraryOnce();
+  if (name === 'me' && typeof refreshMeView === 'function') refreshMeView();
   window.scrollTo(0, 0);
 }
 tabbarBtns.forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
 
-/* ========== Library view: lazy init + sub-tab toggle ========== */
+/* ========== Library view: 材料 / 靈感 ========== */
 let _libraryInited = false;
 async function initLibraryOnce() {
-  // 子頁切換永遠綁定(不管 DB 成功與否)
   if (!_libraryInited) {
-    const segBtns = document.querySelectorAll('.lib-segmented .tabs-btn');
-    const paneMat   = document.getElementById('lib-pane-materials');
-    const paneGal   = document.getElementById('lib-pane-gallery');
-    const paneWorks = document.getElementById('lib-pane-works');
-    const panePlans = document.getElementById('lib-pane-plans');
+    const segBtns = document.querySelectorAll('.view-library .lib-segmented .tabs-btn');
+    const paneMat = document.getElementById('lib-pane-materials');
+    const paneGal = document.getElementById('lib-pane-gallery');
     const libTitle = document.getElementById('libTitle');
-    const titles = { materials: '材料庫', gallery: '美甲靈感', works: '作品紀錄', plans: '美甲計劃' };
+    const titles = { materials: '材料庫', gallery: '美甲靈感' };
     function showSub(name) {
       segBtns.forEach(b => b.classList.toggle('active', b.dataset.libtab === name));
-      paneMat.hidden   = name !== 'materials';
-      paneGal.hidden   = name !== 'gallery';
-      paneWorks.hidden = name !== 'works';
-      panePlans.hidden = name !== 'plans';
+      paneMat.hidden = name !== 'materials';
+      paneGal.hidden = name !== 'gallery';
       libTitle.textContent = titles[name] || '圖庫';
     }
     segBtns.forEach(b => b.addEventListener('click', () => showSub(b.dataset.libtab)));
     showSub('materials');
     _libraryInited = true;
 
-    // DB + 四個子頁初始化(一次)
     try {
       await MediaDB.init();
       await Materials.init();
       await Gallery.init();
-      await Works.init();
-      await Plans.init();
     } catch (err) {
       console.warn('Library init failed', err);
       const grid = document.getElementById('matGrid');
       if (grid) grid.innerHTML = '<div class="empty" style="padding:24px;">瀏覽器不支援 IndexedDB,圖庫無法使用。</div>';
     }
+  }
+}
+
+/* ========== Record view: 配方 / 計劃 / 作品 ========== */
+let _recordInited = false;
+async function initRecordOnce() {
+  // 配方部分(原 saved view)總是要刷新
+  if (typeof renderSaved === 'function') renderSaved();
+
+  if (!_recordInited) {
+    const segBtns = document.querySelectorAll('.record-segmented .tabs-btn');
+    const paneRec = document.getElementById('record-pane-recipes');
+    const panePln = document.getElementById('record-pane-plans');
+    const paneWrk = document.getElementById('record-pane-works');
+    const recTitle = document.getElementById('recordTitle');
+    const titles = { recipes: '配方收藏', plans: '美甲計劃', works: '作品紀錄' };
+    function showSub(name) {
+      segBtns.forEach(b => b.classList.toggle('active', b.dataset.rectab === name));
+      paneRec.hidden = name !== 'recipes';
+      panePln.hidden = name !== 'plans';
+      paneWrk.hidden = name !== 'works';
+      recTitle.textContent = titles[name] || '紀錄';
+    }
+    segBtns.forEach(b => b.addEventListener('click', () => showSub(b.dataset.rectab)));
+    showSub('recipes');
+    _recordInited = true;
+
+    try {
+      await MediaDB.init();
+      await Works.init();
+      await Plans.init();
+    } catch (err) {
+      console.warn('Record init failed', err);
+    }
+  }
+}
+
+/* ========== Me view: 主題切換 + 基底色入口 ========== */
+function bindMeView() {
+  // 基底色入口
+  const basesEntry = document.getElementById('basesEntryCard');
+  basesEntry && basesEntry.addEventListener('click', () => switchView('bases'));
+
+  // 基底色 view 的返回鈕
+  const basesBack = document.getElementById('basesBackBtn');
+  basesBack && basesBack.addEventListener('click', () => switchView('me'));
+
+  // 主題切換
+  const themeBtns = document.querySelectorAll('.theme-btn[data-theme-mode]');
+  function paintActive() {
+    const cur = (window.Theme && Theme.get && Theme.get()) || 'auto';
+    themeBtns.forEach(b => b.classList.toggle('active', b.dataset.themeMode === cur));
+  }
+  themeBtns.forEach(b => b.addEventListener('click', () => {
+    if (window.Theme && Theme.set) Theme.set(b.dataset.themeMode);
+    paintActive();
+  }));
+  paintActive();
+}
+function refreshMeView() {
+  // 顯示已啟用基底色數量
+  const sub = document.getElementById('basesEntrySub');
+  if (sub && Array.isArray(BASES)) {
+    sub.textContent = `目前有 ${BASES.length} 個基底色`;
+  }
+  // 重新整理主題按鈕的 active 狀態
+  const themeBtns = document.querySelectorAll('.theme-btn[data-theme-mode]');
+  if (themeBtns.length) {
+    const cur = (window.Theme && Theme.get && Theme.get()) || 'auto';
+    themeBtns.forEach(b => b.classList.toggle('active', b.dataset.themeMode === cur));
   }
 }
 
@@ -2338,11 +2401,11 @@ recentRail && recentRail.addEventListener('click', (e) => {
   const item = e.target.closest('.rail-item');
   if (!item) return;
   // 切到收藏分頁，再打開 detail
-  switchView('saved');
+  switchView('record');
   setTimeout(() => openDetail(item.dataset.id), 50);
 });
 
-recentMore && recentMore.addEventListener('click', () => switchView('saved'));
+recentMore && recentMore.addEventListener('click', () => switchView('record'));
 
 function renderTipCard() {
   if (!tipText) return;
@@ -2469,4 +2532,5 @@ hexModalInput  && hexModalInput .addEventListener('keydown', (e) => {
 BASES = loadBases();
 rebuildLatents();
 SAVED = loadSaved();
+if (typeof bindMeView === 'function') bindMeView();
 switchView('mix');

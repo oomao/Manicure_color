@@ -9,7 +9,8 @@
 <meta name="theme-color" content="#FAFAFA">
 <title>美甲調色</title>
 <script src="https://scrtwpns.com/mixbox.js"></script>
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="styles.css?v=7">
+<script src="theme.js?v=7"></script>
 </head>
 <body>
 <main>
@@ -163,38 +164,74 @@
     </div>
   </section>
 
-  <!-- ============ VIEW: 收藏 ============ -->
-  <section class="view view-saved" id="view-saved" hidden>
+  <!-- ============ VIEW: 紀錄(原收藏 + 計劃 + 作品 整合) ============ -->
+  <section class="view view-record" id="view-record" hidden>
     <div class="view-header">
-      <h1>收藏</h1>
+      <h1 id="recordTitle">紀錄</h1>
       <span class="hint" id="savedCount" style="margin: 0; font-size: 12px;"></span>
     </div>
 
-    <div class="saved-search" id="savedSearchWrap" hidden>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="savedSearch" placeholder="搜尋名稱、備註或標籤" />
+    <div class="tabs lib-segmented record-segmented">
+      <button class="tabs-btn active" data-rectab="recipes">配方</button>
+      <button class="tabs-btn" data-rectab="plans">計劃</button>
+      <button class="tabs-btn" data-rectab="works">作品</button>
     </div>
 
-    <div id="savedListWrap" class="saved-list"></div>
+    <!-- Sub-pane: 配方(原收藏) -->
+    <div class="lib-pane" id="record-pane-recipes">
+      <div class="saved-search" id="savedSearchWrap" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="savedSearch" placeholder="搜尋名稱、備註或標籤" />
+      </div>
 
-    <div id="savedEmpty" class="empty">
-      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      <div>還沒有收藏配方</div>
-      <div class="sub-msg">在「調色」頁面點選顏色後，按下「收藏配方」即可</div>
+      <div id="savedListWrap" class="saved-list"></div>
+
+      <div id="savedEmpty" class="empty">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <div>還沒有收藏配方</div>
+        <div class="sub-msg">在「調色」頁面點選顏色後,按下「收藏配方」即可</div>
+      </div>
+
+      <div id="savedNoResult" class="empty" hidden>
+        <div>沒有符合的配方</div>
+        <div class="sub-msg">試試其他關鍵字</div>
+      </div>
     </div>
 
-    <div id="savedNoResult" class="empty" hidden>
-      <div>沒有符合的配方</div>
-      <div class="sub-msg">試試其他關鍵字</div>
+    <!-- Sub-pane: 計劃 -->
+    <div class="lib-pane" id="record-pane-plans" hidden>
+      <div class="lib-toolbar lib-toolbar-end">
+        <button class="btn btn-primary lib-add-btn" id="plansAddBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          新增計劃
+        </button>
+      </div>
+      <div class="lib-grid" id="plansGrid"></div>
+      <div class="empty lib-empty" id="plansEmpty"></div>
+    </div>
+
+    <!-- Sub-pane: 作品 -->
+    <div class="lib-pane" id="record-pane-works" hidden>
+      <div class="lib-toolbar lib-toolbar-end">
+        <button class="btn btn-primary lib-add-btn" id="worksAddBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          新增作品
+        </button>
+      </div>
+      <div class="lib-grid" id="worksGrid"></div>
+      <div class="empty lib-empty" id="worksEmpty"></div>
     </div>
   </section>
 
   <!-- ============ VIEW: 基底色 ============ -->
   <section class="view view-bases" id="view-bases" hidden>
-    <div class="view-header">
-      <h1>基底色</h1>
-      <button class="btn btn-ghost" id="addBaseBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
+    <div class="view-header view-header-back">
+      <button class="icon-btn back-btn" id="basesBackBtn" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="22" height="22"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <h1>基底色管理</h1>
+      <button class="btn btn-primary lib-add-btn" id="addBaseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
         新增
       </button>
     </div>
@@ -230,8 +267,6 @@
     <div class="tabs lib-segmented">
       <button class="tabs-btn active" data-libtab="materials">材料</button>
       <button class="tabs-btn" data-libtab="gallery">靈感</button>
-      <button class="tabs-btn" data-libtab="works">作品</button>
-      <button class="tabs-btn" data-libtab="plans">計劃</button>
     </div>
 
     <!-- Sub-pane: 材料 -->
@@ -267,105 +302,113 @@
       <div class="empty lib-empty" id="galEmpty"></div>
     </div>
 
-    <!-- Sub-pane: 作品 -->
-    <div class="lib-pane" id="lib-pane-works" hidden>
-      <div class="lib-toolbar lib-toolbar-end">
-        <button class="btn btn-primary lib-add-btn" id="worksAddBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
-          新增作品
-        </button>
-      </div>
-      <div class="lib-grid" id="worksGrid"></div>
-      <div class="empty lib-empty" id="worksEmpty"></div>
-    </div>
-
-    <!-- Sub-pane: 計劃 -->
-    <div class="lib-pane" id="lib-pane-plans" hidden>
-      <div class="lib-toolbar lib-toolbar-end">
-        <button class="btn btn-primary lib-add-btn" id="plansAddBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
-          新增計劃
-        </button>
-      </div>
-      <div class="lib-grid" id="plansGrid"></div>
-      <div class="empty lib-empty" id="plansEmpty"></div>
-    </div>
   </section>
 
   <!-- ============ VIEW: 我的 ============ -->
   <section class="view view-me" id="view-me" hidden>
     <div class="view-header"><h1>我的</h1></div>
 
-    <div class="card timer-card" id="timerCard" style="cursor: pointer;">
-      <div class="timer-row">
-        <div class="timer-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 1h6M5 4l-1 1M19 4l1 1"/></svg>
-        </div>
-        <div class="timer-info">
-          <div class="title">碼表</div>
-          <div class="sub">記錄每個步驟花的時間，可記次（lap）</div>
-        </div>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: var(--text-3);"><path d="m9 18 6-6-6-6"/></svg>
+    <!-- 主題切換 -->
+    <div class="card me-card">
+      <div class="me-card-head">
+        <span class="me-card-icon">🌗</span>
+        <span class="me-card-title">主題</span>
+      </div>
+      <div class="theme-switcher">
+        <button class="theme-btn" data-theme-mode="auto">
+          <span class="theme-btn-emoji">⚙️</span><span>自動</span>
+        </button>
+        <button class="theme-btn" data-theme-mode="light">
+          <span class="theme-btn-emoji">☀️</span><span>淺色</span>
+        </button>
+        <button class="theme-btn" data-theme-mode="dark">
+          <span class="theme-btn-emoji">🌙</span><span>深色</span>
+        </button>
       </div>
     </div>
 
+    <!-- 基底色管理入口 -->
+    <div class="card me-entry-card" id="basesEntryCard">
+      <div class="me-entry-icon" style="background: linear-gradient(135deg, var(--accent), var(--rose-gold));">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+      </div>
+      <div class="me-entry-info">
+        <div class="title">基底色管理</div>
+        <div class="sub" id="basesEntrySub">設定你手邊有的顏料</div>
+      </div>
+      <svg class="me-entry-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m9 18 6-6-6-6"/></svg>
+    </div>
+
+    <!-- 碼表入口 -->
+    <div class="card me-entry-card" id="timerCard">
+      <div class="me-entry-icon" style="background: linear-gradient(135deg, #93BFCF, #7AA9BC);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 1h6M5 4l-1 1M19 4l1 1"/></svg>
+      </div>
+      <div class="me-entry-info">
+        <div class="title">碼表</div>
+        <div class="sub">記錄每個步驟花的時間,可記次(lap)</div>
+      </div>
+      <svg class="me-entry-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m9 18 6-6-6-6"/></svg>
+    </div>
+
+    <!-- 關於 -->
     <div class="card">
+      <div class="me-card-head" style="margin-bottom: 6px;">
+        <span class="me-card-icon">ℹ️</span>
+        <span class="me-card-title">關於 / 說明</span>
+      </div>
       <details open>
         <summary>關於這個 APP</summary>
         <div>
-          <p>美甲調色小幫手是一個基於物理顏料模型的調色計算器。
-          上傳靈感圖片，點選想要的顏色，APP 會推薦你目前基底色的混合配方。</p>
+          <p>美甲調色小幫手是基於物理顏料模型的調色計算器。
+          上傳靈感圖片,點選想要的顏色,APP 會推薦你目前基底色的混合配方。</p>
         </div>
       </details>
 
       <details>
         <summary>演算法說明</summary>
         <div>
-          <p><b>混色：</b>Mixbox（Sochorová &amp; Jamriška, SIGGRAPH Asia 2021）—
-          以真實顏料訓練的 latent-space 混色模型，被 Rebelle / Procreate 外掛 / Corel Painter 採用。</p>
-          <p><b>色差：</b>CIEDE2000（CIE 國際色差標準 2001），全球色彩產業標準。</p>
-          <p><b>著色力補償：</b>依 ISO 787-24，碳黑系預設 ×3.0 補償。</p>
+          <p><b>混色:</b>Mixbox(Sochorová &amp; Jamriška, SIGGRAPH Asia 2021)—
+          以真實顏料訓練的 latent-space 混色模型,被 Rebelle / Procreate 外掛 / Corel Painter 採用。</p>
+          <p><b>色差:</b>CIEDE2000(CIE 國際色差標準 2001),全球色彩產業標準。</p>
+          <p><b>著色力補償:</b>依 ISO 787-24,碳黑系預設 ×3.0 補償。</p>
         </div>
       </details>
 
       <details>
-        <summary>為什麼預估色跟實際塗出來會有差異？</summary>
+        <summary>為什麼預估色跟實際塗出來會有差異?</summary>
         <div>
-          <p><b>① 螢幕色差 ΔE 3-8：</b>iPhone 校色準（ΔE &lt; 1），但一般筆電未校色常有 3-8 ΔE。</p>
-          <p><b>② UV/LED 固化後變深：</b>業界共識，實際塗出永遠比預覽深一點。</p>
-          <p><b>③ 基底色 RGB 估算：</b>到「基底色」分頁可校正，建議拍自家色卡採樣。</p>
+          <p><b>① 螢幕色差 ΔE 3-8:</b>iPhone 校色準(ΔE &lt; 1),但一般筆電未校色常有 3-8 ΔE。</p>
+          <p><b>② UV/LED 固化後變深:</b>業界共識,實際塗出永遠比預覽深一點。</p>
+          <p><b>③ 基底色 RGB 估算:</b>到「基底色管理」可校正,建議拍自家色卡採樣。</p>
         </div>
       </details>
 
       <details>
         <summary>資料儲存</summary>
         <div>
-          <p>所有基底色設定都存在你瀏覽器的 localStorage，不會傳到任何伺服器。
-          清除瀏覽器資料會清空設定。</p>
-          <button class="btn btn-secondary" id="resetBtn" style="margin-top: 8px;">重置為預設 5 色</button>
+          <p>基底色 / 配方存在 localStorage;材料、靈感、計劃、作品(含照片)存在 IndexedDB。
+          全部都是本機瀏覽器,不會上傳到任何伺服器。</p>
+          <button class="btn btn-secondary" id="resetBtn" style="margin-top: 8px;">重置基底色為預設 5 色</button>
         </div>
       </details>
     </div>
   </section>
 </main>
 
-<!-- ============ TAB BAR ============ -->
+<!-- ============ TAB BAR(4 顆 簡化版) ============ -->
 <nav class="tabbar">
   <button class="tabbar-btn active" data-view="mix">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="1" fill="currentColor"/><circle cx="17.5" cy="10.5" r="1" fill="currentColor"/><circle cx="8.5" cy="7.5" r="1" fill="currentColor"/><circle cx="6.5" cy="12.5" r="1" fill="currentColor"/><path d="M12 22a10 10 0 1 1 10-10c0 5.5-3 6-6 6h-1.5a2.5 2.5 0 0 0 0 5 2.5 2.5 0 0 1-2.5 2"/></svg>
     調色
   </button>
-  <button class="tabbar-btn" data-view="saved">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-    收藏
-  </button>
-  <button class="tabbar-btn" data-view="bases">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-    基底色
-  </button>
   <button class="tabbar-btn" data-view="library">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
     圖庫
+  </button>
+  <button class="tabbar-btn" data-view="record">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    紀錄
   </button>
   <button class="tabbar-btn" data-view="me">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -814,14 +857,14 @@
   </div>
 </div>
 
-<script src="media-db.js?v=6"></script>
-<script src="img-utils.js?v=6"></script>
-<script src="cat-manager.js?v=6"></script>
-<script src="materials.js?v=6"></script>
-<script src="gallery.js?v=6"></script>
-<script src="works.js?v=6"></script>
-<script src="plans.js?v=6"></script>
-<script src="inspire-picker.js?v=6"></script>
-<script src="app.js?v=6"></script>
+<script src="media-db.js?v=7"></script>
+<script src="img-utils.js?v=7"></script>
+<script src="cat-manager.js?v=7"></script>
+<script src="materials.js?v=7"></script>
+<script src="gallery.js?v=7"></script>
+<script src="works.js?v=7"></script>
+<script src="plans.js?v=7"></script>
+<script src="inspire-picker.js?v=7"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>
