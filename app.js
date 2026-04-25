@@ -225,7 +225,13 @@ const views = {
   library: document.getElementById('view-library'),
   me:      document.getElementById('view-me'),
 };
+function closeAllModals() {
+  // 切換 view 時把所有開著的 modal-overlay 關掉,避免遺留的 modal 蓋住新 view 的點擊
+  document.querySelectorAll('.modal-overlay').forEach(m => { m.hidden = true; });
+  document.body.style.overflow = '';
+}
 function switchView(name) {
+  closeAllModals();
   Object.entries(views).forEach(([k, el]) => { if (el) el.hidden = (k !== name); });
   tabbarBtns.forEach(b => b.classList.toggle('active', b.dataset.view === name));
   if (name === 'bases') renderBases();
