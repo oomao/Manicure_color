@@ -39,6 +39,15 @@
       </button>
     </div>
 
+    <button class="action-card-link" id="actionInspireBtn">
+      <span class="emoji">🖼️</span>
+      <span class="text">
+        <span class="title">從靈感圖庫挑一張</span>
+        <span class="sub">直接拿你存過的圖來取色</span>
+      </span>
+      <span class="arrow">→</span>
+    </button>
+
     <div class="rail-section">
       <div class="rail-header">
         <span class="title">最近收藏</span>
@@ -212,6 +221,51 @@
     </div>
   </section>
 
+  <!-- ============ VIEW: 圖庫 ============ -->
+  <section class="view view-library" id="view-library" hidden>
+    <div class="view-header">
+      <h1 id="libTitle">圖庫</h1>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost" id="matAddBtn" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
+          新增材料
+        </button>
+        <button class="btn btn-ghost" id="galAddBtn" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
+          新增靈感
+        </button>
+      </div>
+    </div>
+
+    <div class="tabs lib-segmented">
+      <button class="tabs-btn active" data-libtab="materials">材料</button>
+      <button class="tabs-btn" data-libtab="gallery">靈感</button>
+    </div>
+
+    <!-- Sub-pane: 材料 -->
+    <div class="lib-pane" id="lib-pane-materials">
+      <div class="lib-toolbar">
+        <div class="saved-search" style="margin:0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="matSearch" placeholder="搜尋名稱或備註" />
+        </div>
+      </div>
+      <div class="lib-chips" id="matChips"></div>
+      <div class="lib-grid" id="matGrid"></div>
+      <div class="empty lib-empty" id="matEmpty"></div>
+    </div>
+
+    <!-- Sub-pane: 靈感 -->
+    <div class="lib-pane" id="lib-pane-gallery" hidden>
+      <div class="lib-chips-label">色系</div>
+      <div class="lib-chips" id="galChipsColor"></div>
+      <div class="lib-chips-label">風格</div>
+      <div class="lib-chips" id="galChipsStyle"></div>
+      <div class="lib-grid" id="galGrid"></div>
+      <div class="empty lib-empty" id="galEmpty"></div>
+    </div>
+  </section>
+
   <!-- ============ VIEW: 我的 ============ -->
   <section class="view view-me" id="view-me" hidden>
     <div class="view-header"><h1>我的</h1></div>
@@ -282,6 +336,10 @@
   <button class="tabbar-btn" data-view="bases">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
     基底色
+  </button>
+  <button class="tabbar-btn" data-view="library">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+    圖庫
   </button>
   <button class="tabbar-btn" data-view="me">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -481,6 +539,147 @@
   </div>
 </div>
 
+<!-- ============ MODAL: 材料 (新增/編輯) ============ -->
+<div class="modal-overlay" id="matModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="matModalTitle">新增材料</h2>
+      <button class="icon-btn" id="matModalClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="lib-preview" id="matPreview">
+        <div class="lib-preview-empty">點下方「選擇照片」</div>
+      </div>
+      <label class="btn btn-secondary btn-block" for="matFile" style="margin-top:10px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        選擇照片
+      </label>
+      <input type="file" id="matFile" accept="image/*" capture="environment">
+
+      <div class="field" style="margin-top:14px;">
+        <label class="field-label">名稱</label>
+        <input type="text" class="input" id="matName" maxlength="30" placeholder="例:infin.Lin 白色凝膠">
+      </div>
+      <div class="field">
+        <label class="field-label">分類</label>
+        <div style="display:flex;gap:6px;">
+          <select class="select" id="matCat" style="flex:1;"></select>
+          <button class="btn btn-secondary" id="matNewCatBtn" type="button" style="flex-shrink:0;">+ 新增</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">備註(選填)</label>
+        <input type="text" class="input" id="matNote" maxlength="200" placeholder="例:常用色 / 已用完待補">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="matDelete" hidden>刪除</button>
+      <button class="btn btn-secondary" id="matModalCancel">取消</button>
+      <button class="btn btn-primary" id="matModalSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: 靈感 (新增/編輯) ============ -->
+<div class="modal-overlay" id="galModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="galModalTitle">新增靈感</h2>
+      <button class="icon-btn" id="galModalClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="lib-preview" id="galPreview">
+        <div class="lib-preview-empty">點下方「選擇照片」</div>
+      </div>
+      <label class="btn btn-secondary btn-block" for="galFile" style="margin-top:10px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        選擇照片
+      </label>
+      <input type="file" id="galFile" accept="image/*" capture="environment">
+
+      <div class="field" style="margin-top:14px;">
+        <label class="field-label">名稱</label>
+        <input type="text" class="input" id="galName" maxlength="30" placeholder="例:春日法式漸層">
+      </div>
+      <div class="field">
+        <label class="field-label" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>色系(單選)</span>
+          <button class="btn btn-ghost" id="galManageColorBtn" type="button" style="font-size:12px;padding:2px 6px;">✏️ 管理</button>
+        </label>
+        <div class="lib-chips lib-chips-pick" id="galColorPicker"></div>
+      </div>
+      <div class="field">
+        <label class="field-label" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>風格(可複選)</span>
+          <button class="btn btn-ghost" id="galNewStyleBtn" type="button" style="font-size:12px;padding:2px 6px;">✏️ 管理</button>
+        </label>
+        <div class="lib-chips lib-chips-pick" id="galStylePicker"></div>
+      </div>
+      <div class="field">
+        <label class="field-label">備註(選填)</label>
+        <input type="text" class="input" id="galNote" maxlength="200" placeholder="例:客戶 A / 春夏新品">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="galDelete" hidden>刪除</button>
+      <button class="btn btn-secondary" id="galModalCancel">取消</button>
+      <button class="btn btn-primary" id="galModalSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: 分類管理(共用) ============ -->
+<div class="modal-overlay" id="catManagerModal" hidden>
+  <div class="modal" style="max-width: 380px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="catMgrTitle">管理分類</h2>
+      <button class="icon-btn" id="catMgrClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="cat-mgr-list" id="catMgrList"></div>
+      <div class="field" style="margin-top:12px;">
+        <label class="field-label">新增項目</label>
+        <div style="display:flex; gap:6px;">
+          <input type="text" class="input" id="catMgrInput" maxlength="8" style="flex:1;" placeholder="最多 8 字" autocomplete="off">
+          <button class="btn btn-primary" id="catMgrAdd" type="button">+ 新增</button>
+        </div>
+      </div>
+      <div class="hint" id="catMgrHint" style="margin-top:8px; color: var(--danger);"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-block" id="catMgrDone">完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: 從靈感選圖 ============ -->
+<div class="modal-overlay" id="inspirePickerModal" hidden>
+  <div class="modal" style="max-width: 540px; max-height: calc(100vh - 32px);">
+    <div class="modal-header">
+      <h2 class="modal-title">從靈感選圖</h2>
+      <button class="icon-btn" id="inspirePickerClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="lib-grid" id="inspirePickerGrid"></div>
+      <div class="empty" id="inspirePickerEmpty" hidden style="padding:32px 16px;">圖庫還沒有靈感圖,請先到「圖庫 → 靈感」新增。</div>
+    </div>
+  </div>
+</div>
+
+<script src="media-db.js"></script>
+<script src="img-utils.js"></script>
+<script src="cat-manager.js"></script>
+<script src="materials.js"></script>
+<script src="gallery.js"></script>
+<script src="inspire-picker.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

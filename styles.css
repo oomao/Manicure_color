@@ -1588,3 +1588,248 @@ details > div p:last-child { margin-bottom: 0; }
   .stopwatch-laps { max-height: 100px; }
   .compare-cell .swatch { height: 72px; }
 }
+
+/* =============================================================================
+   圖庫(材料 / 美甲靈感)
+   ============================================================================= */
+.lib-segmented { margin-top: 4px; margin-bottom: 12px; }
+
+.lib-toolbar { margin-bottom: 10px; }
+
+.lib-chips-label {
+  font-size: 11px;
+  color: var(--text-2);
+  margin: 6px 0 4px;
+  font-weight: 500;
+}
+.lib-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0 8px;
+  margin: 0 -2px 8px;
+}
+.lib-chips::-webkit-scrollbar { display: none; }
+.lib-chips-pick {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+
+.chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.chip:active { background: var(--bg); }
+.chip.active {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
+.chip-n {
+  font-size: 11px;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+.chip.active .chip-n { opacity: 0.85; }
+
+.lib-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+}
+@media (min-width: 480px) {
+  .lib-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.lib-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.lib-card:active {
+  transform: scale(0.98);
+}
+.lib-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg);
+  overflow: hidden;
+}
+.lib-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.lib-info { padding: 8px 10px 10px; }
+.lib-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lib-meta {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lib-empty {
+  padding: 36px 16px;
+  font-size: 14px;
+  color: var(--text-2);
+  text-align: center;
+}
+.lib-empty[hidden] { display: none; }
+
+.lib-pane[hidden] { display: none; }
+
+/* Modal preview (材料 / 靈感 共用) */
+.lib-preview {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 280px;
+}
+.lib-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.lib-preview-empty {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+/* chip 上的「✏️ 管理」鈕 */
+.chip-manage {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.chip-manage:active { background: var(--bg); }
+
+/* 分類管理 modal */
+.cat-mgr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.cat-mgr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.cat-mgr-name {
+  color: var(--text);
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cat-mgr-del {
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  font-size: 22px;
+  line-height: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.cat-mgr-del:hover, .cat-mgr-del:active {
+  background: var(--bg);
+  color: var(--danger);
+}
+.cat-mgr-empty {
+  text-align: center;
+  color: var(--text-2);
+  padding: 24px 0;
+  font-size: 13px;
+}
+
+/* 「從靈感圖庫挑一張」action 連結 */
+.action-card-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.15s;
+}
+.action-card-link:active { background: var(--bg); }
+.action-card-link .emoji { font-size: 22px; flex-shrink: 0; }
+.action-card-link .text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.action-card-link .title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.action-card-link .sub {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+.action-card-link .arrow {
+  color: var(--text-3);
+  font-size: 18px;
+  flex-shrink: 0;
+}

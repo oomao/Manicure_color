@@ -219,20 +219,59 @@ function escapeHtml(s) {
 /* ========== UI: Tab navigation ========== */
 const tabbarBtns = document.querySelectorAll('.tabbar-btn');
 const views = {
-  mix:   document.getElementById('view-mix'),
-  saved: document.getElementById('view-saved'),
-  bases: document.getElementById('view-bases'),
-  me:    document.getElementById('view-me'),
+  mix:     document.getElementById('view-mix'),
+  saved:   document.getElementById('view-saved'),
+  bases:   document.getElementById('view-bases'),
+  library: document.getElementById('view-library'),
+  me:      document.getElementById('view-me'),
 };
 function switchView(name) {
-  Object.entries(views).forEach(([k, el]) => { el.hidden = (k !== name); });
+  Object.entries(views).forEach(([k, el]) => { if (el) el.hidden = (k !== name); });
   tabbarBtns.forEach(b => b.classList.toggle('active', b.dataset.view === name));
   if (name === 'bases') renderBases();
   if (name === 'saved') renderSaved();
   if (name === 'mix' && typeof renderHero === 'function') renderHero();
+  if (name === 'library' && typeof initLibraryOnce === 'function') initLibraryOnce();
   window.scrollTo(0, 0);
 }
 tabbarBtns.forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
+
+/* ========== Library view: lazy init + sub-tab toggle ========== */
+let _libraryInited = false;
+async function initLibraryOnce() {
+  // 子頁切換永遠綁定(不管 DB 成功與否)
+  if (!_libraryInited) {
+    const segBtns = document.querySelectorAll('.lib-segmented .tabs-btn');
+    const paneMat = document.getElementById('lib-pane-materials');
+    const paneGal = document.getElementById('lib-pane-gallery');
+    const matAdd  = document.getElementById('matAddBtn');
+    const galAdd  = document.getElementById('galAddBtn');
+    const libTitle = document.getElementById('libTitle');
+    function showSub(name) {
+      segBtns.forEach(b => b.classList.toggle('active', b.dataset.libtab === name));
+      const isMat = name === 'materials';
+      paneMat.hidden = !isMat;
+      paneGal.hidden = isMat;
+      matAdd.hidden  = !isMat;
+      galAdd.hidden  = isMat;
+      libTitle.textContent = isMat ? '材料庫' : '美甲靈感';
+    }
+    segBtns.forEach(b => b.addEventListener('click', () => showSub(b.dataset.libtab)));
+    showSub('materials');
+    _libraryInited = true;
+
+    // DB + 兩個子頁初始化(一次)
+    try {
+      await MediaDB.init();
+      await Materials.init();
+      await Gallery.init();
+    } catch (err) {
+      console.warn('Library init failed', err);
+      const grid = document.getElementById('matGrid');
+      if (grid) grid.innerHTML = '<div class="empty" style="padding:24px;">瀏覽器不支援 IndexedDB,圖庫無法使用。</div>';
+    }
+  }
+}
 
 /* ========== Mix view: image upload & pick ========== */
 const fileInput     = document.getElementById('fileInput');
@@ -2304,6 +2343,37 @@ actionImageBtn && actionImageBtn.addEventListener('click', () => {
   openPicker('image');
   // 直接觸發檔案選擇
   fileInput.click();
+});
+
+/* ---------- 從靈感選圖 → 載入 mix canvas ---------- */
+function loadBlobIntoMixCanvas(blob) {
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    currentImage = img;
+    drawImage(img, canvas, ctx, canvasWrap);
+    canvasWrap.classList.add('has-image');
+    hint.style.display = 'block';
+    crosshair.classList.remove('show');
+    if (typeof resetZoom === 'function') resetZoom();
+    if (zoomControls) zoomControls.hidden = false;
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); alert('圖片載入失敗'); };
+  img.src = url;
+}
+
+const actionInspireBtn = document.getElementById('actionInspireBtn');
+actionInspireBtn && actionInspireBtn.addEventListener('click', () => {
+  openPicker('image');
+  setActionActive('image');
+  InspirePicker.open((blob) => {
+    loadBlobIntoMixCanvas(blob);
+    // 滾到 picker section 讓使用者看到圖
+    setTimeout(() => {
+      pickerSection && pickerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  });
 });
 
 actionHexBtn && actionHexBtn.addEventListener('click', () => {
