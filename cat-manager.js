@@ -74,7 +74,7 @@
     }
     try {
       await _state.onAdd(name);
-      _state.items.push(name);
+      // 不在這裡 push — caller 的 onAdd 已負責更新陣列
       elInput.value = '';
       elHint.textContent = '';
       renderList();
@@ -89,7 +89,7 @@
     if (!ok) return;
     try {
       await _state.onDelete(name);
-      _state.items = _state.items.filter(x => x !== name);
+      // 不在這裡 filter — caller 的 onDelete 已負責更新陣列
       renderList();
     } catch (err) {
       elHint.textContent = '刪除失敗:' + (err.message || err);

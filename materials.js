@@ -43,6 +43,13 @@
     elDeleteBtn = $('matDelete');
 
     _categories = await MediaDB.getCategoryDef(CATS_KEY, DEFAULT_CATS);
+    // 清掉先前 bug 造成的重複
+    const seen = new Set();
+    const deduped = _categories.filter(c => seen.has(c) ? false : (seen.add(c), true));
+    if (deduped.length !== _categories.length) {
+      _categories = deduped;
+      await MediaDB.setCategoryDef(CATS_KEY, _categories);
+    }
     _items = await MediaDB.getAll(STORE);
     _items.sort((a, b) => b.updatedAt - a.updatedAt);
 
@@ -105,7 +112,7 @@
         await MediaDB.setCategoryDef(CATS_KEY, _categories);
       },
       onDelete: async (name) => {
-        _categories = _categories.filter(c => c !== name);
+        { const idx = _categories.indexOf(name); if (idx >= 0) _categories.splice(idx, 1); }
         await MediaDB.setCategoryDef(CATS_KEY, _categories);
         const affected = _items.filter(it => it.category === name);
         for (const it of affected) {
@@ -207,7 +214,7 @@
         await MediaDB.setCategoryDef(CATS_KEY, _categories);
       },
       onDelete: async (name) => {
-        _categories = _categories.filter(c => c !== name);
+        { const idx = _categories.indexOf(name); if (idx >= 0) _categories.splice(idx, 1); }
         await MediaDB.setCategoryDef(CATS_KEY, _categories);
         const affected = _items.filter(it => it.category === name);
         for (const it of affected) {

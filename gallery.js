@@ -51,6 +51,15 @@
 
     _colors = await MediaDB.getCategoryDef(COLOR_KEY, DEFAULT_COLORS);
     _styles = await MediaDB.getCategoryDef(STYLE_KEY, DEFAULT_STYLES);
+    // 清掉先前 bug 造成的重複
+    const dedupe = (arr) => {
+      const seen = new Set();
+      return arr.filter(x => seen.has(x) ? false : (seen.add(x), true));
+    };
+    const dc = dedupe(_colors);
+    const ds = dedupe(_styles);
+    if (dc.length !== _colors.length) { _colors = dc; await MediaDB.setCategoryDef(COLOR_KEY, _colors); }
+    if (ds.length !== _styles.length) { _styles = ds; await MediaDB.setCategoryDef(STYLE_KEY, _styles); }
     _items = await MediaDB.getAll(STORE);
     _items.sort((a, b) => b.updatedAt - a.updatedAt);
 
@@ -122,7 +131,7 @@
         await MediaDB.setCategoryDef(COLOR_KEY, _colors);
       },
       onDelete: async (name) => {
-        _colors = _colors.filter(c => c !== name);
+        { const idx = _colors.indexOf(name); if (idx >= 0) _colors.splice(idx, 1); }
         await MediaDB.setCategoryDef(COLOR_KEY, _colors);
         const affected = _items.filter(it => it.colorFamily === name);
         for (const it of affected) {
@@ -150,7 +159,7 @@
         await MediaDB.setCategoryDef(STYLE_KEY, _styles);
       },
       onDelete: async (name) => {
-        _styles = _styles.filter(s => s !== name);
+        { const idx = _styles.indexOf(name); if (idx >= 0) _styles.splice(idx, 1); }
         await MediaDB.setCategoryDef(STYLE_KEY, _styles);
         const affected = _items.filter(it => Array.isArray(it.styles) && it.styles.includes(name));
         for (const it of affected) {
