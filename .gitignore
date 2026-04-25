@@ -1,0 +1,14 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/
+
+# Personal reference photos (not part of the app)
+base color/
+*.JPG
+*.jpg
+*.jpeg
+
+# Keep specific assets if needed by listing them above this line

@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="美甲調色">
+<meta name="theme-color" content="#FAFAFA">
+<title>美甲調色</title>
+<script src="https://scrtwpns.com/mixbox.js"></script>
+<style>
+  :root {
+    --bg:           #FAFAFA;
+    --surface:      #FFFFFF;
+    --text:         #262626;
+    --text-2:       #8E8E8E;
+    --text-3:       #C7C7C7;
+    --border:       #DBDBDB;
+    --border-soft:  #EFEFEF;
+    --accent:       #ED4956;
+    --link:         #0095F6;
+    --link-hover:   #1877F2;
+    --success:      #2ECC71;
+    --warning:      #F39C12;
+    --danger:       #ED4956;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+                 "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0));
+  }
+  main { max-width: 600px; margin: 0 auto; }
+
+  .view {
+    padding: 12px 16px 24px;
+    animation: fadeIn 0.18s ease;
+  }
+  .view[hidden] { display: none; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+
+  .view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border-soft);
+    min-height: 44px;
+  }
+  .view-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.2px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+    font-family: inherit;
+    line-height: 1;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: var(--link); color: #fff; }
+  .btn-primary:active { background: var(--link-hover); }
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:active { background: var(--bg); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--link);
+    padding: 6px 8px;
+  }
+  .btn-block { display: flex; width: 100%; }
+
+  input[type="file"] { display: none; }
+  .input, .select {
+    width: 100%;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text);
+    font-family: inherit;
+  }
+  .input:focus, .select:focus { outline: none; border-color: var(--link); }
+  .field { margin-bottom: 12px; }
+  .field-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-2);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .field-label .required { color: var(--accent); }
+
+  .canvas-wrap {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--border-soft);
+    margin-top: 12px;
+    display: none;
+  }
+  .canvas-wrap.has-image { display: block; }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .crosshair {
+    position: absolute;
+    width: 24px; height: 24px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1.5px rgba(0,0,0,0.55), 0 0 6px rgba(0,0,0,0.25);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    display: none;
+  }
+  .crosshair.show { display: block; }
+  .hint {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .compare-cell { display: flex; flex-direction: column; }
+  .compare-cell + .compare-cell { border-left: 1px solid var(--border-soft); }
+  .compare-cell .label {
+    padding: 10px 12px 6px;
+    font-size: 11px;
+    color: var(--text-2);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .compare-cell .swatch {
+    height: 96px;
+    margin: 0 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+  .compare-cell .hex {
+    padding: 8px 12px 12px;
+    font-size: 12px;
+    color: var(--text-2);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    text-align: center;
+    letter-spacing: 0.3px;
+  }
+
+  .section-title {
+    margin: 16px 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .recipe-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border-soft);
+    gap: 12px;
+  }
+  .recipe-row:last-child { border-bottom: none; }
+  .recipe-row.zero { opacity: 0.3; }
+  .color-dot {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .recipe-info { flex: 1; min-width: 0; }
+  .recipe-info .name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .recipe-info .sub { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+  .recipe-parts {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    min-width: 36px;
+    text-align: right;
+    line-height: 1;
+  }
+  .recipe-parts .unit {
+    font-size: 11px;
+    color: var(--text-2);
+    font-weight: 400;
+    margin-left: 2px;
+  }
+
+  .ratio-bar {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 600;
+    letter-spacing: 0.8px;
+  }
+
+  .accuracy {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .accuracy-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .accuracy-de {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--text);
+    font-weight: 700;
+    margin: 0 2px;
+  }
+
+  .gamut-warning {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    color: #B91C1C;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .note {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.7;
+  }
+  .note b { color: var(--text); font-weight: 600; }
+
+  .empty {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--text-2);
+    font-size: 14px;
+  }
+  .empty-icon {
+    width: 64px; height: 64px;
+    margin: 0 auto 12px;
+    color: var(--text-3);
+    display: block;
+  }
+  .empty .sub-msg {
+    margin-top: 6px;
+    color: var(--text-3);
+    font-size: 12px;
+  }
+
+  .calculating {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-2);
+    font-size: 14px;
+  }
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--link);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Bases */
+  .base-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-soft);
+    gap: 12px;
+  }
+  .base-item:last-child { border-bottom: none; }
+  .base-swatch {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .base-info { flex: 1; min-width: 0; }
+  .base-info .name {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .base-info .meta {
+    font-size: 12px; color: var(--text-2);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    margin-top: 2px;
+  }
+  .base-actions { display: flex; gap: 2px; }
+  .icon-btn {
+    background: transparent;
+    border: none;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn:active { background: var(--bg); color: var(--text); }
+
+  /* Tab bar */
+  .tabbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border-soft);
+    display: flex;
+    z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .tabbar-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 8px 4px 8px;
+    cursor: pointer;
+    color: var(--text-2);
+    font-size: 10px;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    transition: color 0.15s;
+  }
+  .tabbar-btn.active { color: var(--text); }
+  .tabbar-btn svg { width: 24px; height: 24px; }
+  .tabbar-btn.active svg { stroke-width: 2.4; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-overlay[hidden] { display: none; }
+  .modal {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: scaleIn 0.18s ease;
+  }
+  @keyframes scaleIn {
+    from { transform: scale(0.94); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    flex-shrink: 0;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; margin: 0; }
+  .modal-body { padding: 16px; overflow-y: auto; flex: 1; }
+  .modal-footer {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-soft);
+    flex-shrink: 0;
+  }
+  .modal-footer .btn { flex: 1; }
+
+  /* Tabs (in modal) */
+  .tabs {
+    display: flex;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 14px;
+  }
+  .tabs-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+    cursor: pointer;
+    border-radius: 6px;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .tabs-btn.active {
+    background: #fff;
+    color: var(--text);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .tab-pane[hidden] { display: none; }
+
+  .sample-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-radius: 8px;
+    margin: 12px 0;
+  }
+  .sample-preview .swatch {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+    flex-shrink: 0;
+  }
+  .sample-preview .info { flex: 1; min-width: 0; }
+  .sample-preview .info .label {
+    font-size: 11px; color: var(--text-2);
+  }
+  .sample-preview .info .hex {
+    font-size: 14px; font-weight: 600;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--text);
+    margin-top: 1px;
+  }
+
+  details {
+    border-bottom: 1px solid var(--border-soft);
+  }
+  details:last-child { border-bottom: none; }
+  details summary {
+    cursor: pointer;
+    padding: 14px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after {
+    content: '›';
+    color: var(--text-3);
+    transform: rotate(90deg);
+    transition: transform 0.2s;
+    font-size: 18px;
+    line-height: 1;
+  }
+  details[open] summary::after { transform: rotate(-90deg); }
+  details > div {
+    padding: 0 0 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-2);
+  }
+  details > div p { margin: 0 0 8px; }
+  details > div p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<main>
+  <!-- ============ VIEW: 調色 ============ -->
+  <section class="view view-mix" id="view-mix">
+    <div class="view-header"><h1>調色</h1></div>
+
+    <div class="card">
+      <label class="btn btn-primary btn-block" for="fileInput">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        選擇靈感圖片
+      </label>
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="canvas"></canvas>
+        <div class="crosshair" id="crosshair"></div>
+      </div>
+      <div class="hint" id="hint" style="display:none;">在圖片上點選想要的顏色</div>
+    </div>
+
+    <div class="card" id="resultCard">
+      <div id="emptyState" class="empty">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 22a10 10 0 1 1 10-10c0 5.5-3 6-6 6h-1.5a2.5 2.5 0 0 0 0 5 2.5 2.5 0 0 1-2.5 2"/></svg>
+        <div>選好圖片並點一下顏色</div>
+        <div class="sub-msg">配方會出現在這裡</div>
+      </div>
+
+      <div id="calcState" class="calculating" hidden>
+        <span class="spinner"></span>計算最佳配方中...
+      </div>
+
+      <div id="resultContent" hidden>
+        <div class="compare">
+          <div class="compare-cell">
+            <div class="label">目標色</div>
+            <div class="swatch" id="targetSwatch"></div>
+            <div class="hex" id="targetHex">#------</div>
+          </div>
+          <div class="compare-cell">
+            <div class="label">預估調出</div>
+            <div class="swatch" id="predictSwatch"></div>
+            <div class="hex" id="predictHex">#------</div>
+          </div>
+        </div>
+
+        <div class="accuracy" id="accuracy"></div>
+        <div id="gamutWarning" class="gamut-warning" hidden></div>
+
+        <div class="section-title">配方</div>
+        <div id="recipeList"></div>
+        <div class="ratio-bar" id="ratioSummary"></div>
+
+        <div class="note">
+          <b>關於「份」的計量：</b>
+          建議用 0.01 g 電子秤（1 份 = 0.10 g）；次選牙籤尖刮一團米粒大（直徑 ~3 mm）。
+          不建議用「滴」 — 凝膠黏度差異會讓每滴 0.05–0.3 g 差到 6 倍。
+          <br><br>
+          ✅ 同一次調色從頭到尾用同一種方法、同一個工具，比例才會準。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW: 收藏 ============ -->
+  <section class="view view-saved" id="view-saved" hidden>
+    <div class="view-header"><h1>收藏</h1></div>
+    <div class="empty">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <div>配方收藏功能開發中</div>
+      <div class="sub-msg">Phase 7 上線</div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW: 基底色 ============ -->
+  <section class="view view-bases" id="view-bases" hidden>
+    <div class="view-header">
+      <h1>基底色</h1>
+      <button class="btn btn-ghost" id="addBaseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
+        新增
+      </button>
+    </div>
+
+    <div id="baseCount" class="hint" style="text-align:left;margin:0 0 8px;"></div>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div id="basesList"></div>
+    </div>
+
+    <div id="basesWarning" hidden></div>
+
+    <div class="card" style="margin-top: 16px;">
+      <details>
+        <summary>什麼是「著色力」？</summary>
+        <div>
+          <p>某些顏料（特別是碳黑系黑色）在等量混合時會「壓過」其他顏色 —
+          加一點點黑就會讓整體變很暗，這就是「著色力」高。</p>
+          <p>標準 ×1.0 適合一般彩色；高 ×2.0 適合深紅 / 深紫；超高 ×3.0 適合純黑 / 碳黑系。
+          如果你發現某色推薦份數總是太多或太少，調整這裡的著色力。</p>
+          <p>依據：ISO 787-24 著色力標準、Sochorová &amp; Jamriška 2021（SIGGRAPH Asia）。</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ VIEW: 我的 ============ -->
+  <section class="view view-me" id="view-me" hidden>
+    <div class="view-header"><h1>我的</h1></div>
+
+    <div class="card">
+      <details open>
+        <summary>關於這個 APP</summary>
+        <div>
+          <p>美甲調色小幫手是一個基於物理顏料模型的調色計算器。
+          上傳靈感圖片，點選想要的顏色，APP 會推薦你目前基底色的混合配方。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>演算法說明</summary>
+        <div>
+          <p><b>混色：</b>Mixbox（Sochorová &amp; Jamriška, SIGGRAPH Asia 2021）—
+          以真實顏料訓練的 latent-space 混色模型，被 Rebelle / Procreate 外掛 / Corel Painter 採用。</p>
+          <p><b>色差：</b>CIEDE2000（CIE 國際色差標準 2001），全球色彩產業標準。</p>
+          <p><b>著色力補償：</b>依 ISO 787-24，碳黑系預設 ×3.0 補償。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>為什麼預估色跟實際塗出來會有差異？</summary>
+        <div>
+          <p><b>① 螢幕色差 ΔE 3-8：</b>iPhone 校色準（ΔE &lt; 1），但一般筆電未校色常有 3-8 ΔE。</p>
+          <p><b>② UV/LED 固化後變深：</b>業界共識，實際塗出永遠比預覽深一點。</p>
+          <p><b>③ 基底色 RGB 估算：</b>到「基底色」分頁可校正，建議拍自家色卡採樣。</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>資料儲存</summary>
+        <div>
+          <p>所有基底色設定都存在你瀏覽器的 localStorage，不會傳到任何伺服器。
+          清除瀏覽器資料會清空設定。</p>
+          <button class="btn btn-secondary" id="resetBtn" style="margin-top: 8px;">重置為預設 5 色</button>
+        </div>
+      </details>
+    </div>
+  </section>
+</main>
+
+<!-- ============ TAB BAR ============ -->
+<nav class="tabbar">
+  <button class="tabbar-btn active" data-view="mix">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="1" fill="currentColor"/><circle cx="17.5" cy="10.5" r="1" fill="currentColor"/><circle cx="8.5" cy="7.5" r="1" fill="currentColor"/><circle cx="6.5" cy="12.5" r="1" fill="currentColor"/><path d="M12 22a10 10 0 1 1 10-10c0 5.5-3 6-6 6h-1.5a2.5 2.5 0 0 0 0 5 2.5 2.5 0 0 1-2.5 2"/></svg>
+    調色
+  </button>
+  <button class="tabbar-btn" data-view="saved">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    收藏
+  </button>
+  <button class="tabbar-btn" data-view="bases">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+    基底色
+  </button>
+  <button class="tabbar-btn" data-view="me">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    我的
+  </button>
+</nav>
+
+<!-- ============ MODAL: Add / Edit Base ============ -->
+<div class="modal-overlay" id="baseModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">新增基底色</h2>
+      <button class="icon-btn" id="modalClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs">
+        <button class="tabs-btn active" data-tab="image">從圖片採樣</button>
+        <button class="tabs-btn" data-tab="hex">輸入色號</button>
+      </div>
+
+      <!-- Tab: image -->
+      <div class="tab-pane" id="tab-image">
+        <label class="btn btn-secondary btn-block" for="modalFileInput">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          選擇照片
+        </label>
+        <input type="file" id="modalFileInput" accept="image/*">
+        <div class="canvas-wrap" id="modalCanvasWrap">
+          <canvas id="modalCanvas"></canvas>
+          <div class="crosshair" id="modalCrosshair"></div>
+        </div>
+        <div class="hint" id="modalHint" style="display:none;">點擊圖片上的純色區域取色</div>
+      </div>
+
+      <!-- Tab: hex -->
+      <div class="tab-pane" id="tab-hex" hidden>
+        <div class="field">
+          <label class="field-label">色碼</label>
+          <input type="text" class="input" id="hexInput" placeholder="#RRGGBB（例如 #E5B23C）" maxlength="7" autocapitalize="none" autocomplete="off">
+        </div>
+      </div>
+
+      <!-- 採樣 / 輸入後預覽 -->
+      <div class="sample-preview" id="samplePreview" hidden>
+        <div class="swatch" id="sampleSwatch"></div>
+        <div class="info">
+          <div class="label">目前色值（可繼續微調）</div>
+          <div class="hex" id="sampleHex">#------</div>
+        </div>
+      </div>
+
+      <!-- 共用欄位 -->
+      <div class="field">
+        <label class="field-label">名稱 <span class="required">*</span></label>
+        <input type="text" class="input" id="baseName" placeholder="例：黃 / 螢光粉" maxlength="10">
+      </div>
+      <div class="field">
+        <label class="field-label">品牌色號（選填）</label>
+        <input type="text" class="input" id="baseSub" placeholder="例：infin.Lin 156M" maxlength="40">
+      </div>
+      <div class="field">
+        <label class="field-label">著色力</label>
+        <select class="select" id="baseTint">
+          <option value="1.0">標準 ×1.0（一般彩色）</option>
+          <option value="2.0">高 ×2.0（深紅 / 深紫等深色系）</option>
+          <option value="3.0">超高 ×3.0（純黑 / 碳黑系）</option>
+          <option value="custom">自訂...</option>
+        </select>
+        <input type="number" class="input" id="baseTintCustom" placeholder="0.2 ~ 5.0" step="0.1" min="0.2" max="5.0" hidden style="margin-top: 6px;">
+      </div>
+      <div class="field">
+        <label class="field-label">備註（選填）</label>
+        <input type="text" class="input" id="baseNote" placeholder="例：常用色 / 已用完待補" maxlength="50">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modalCancel">取消</button>
+      <button class="btn btn-primary" id="modalSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   美甲調色 APP — 核心邏輯
+   - 演算法：Mixbox (SIGGRAPH 2021) + CIEDE2000
+   - 動態 N 基底色（最多 8）
+   - localStorage 持久化
+   ========================================================================= */
+
+const STORAGE_KEY        = 'nail-color-mixer.bases.v1';
+const MAX_BASES          = 8;
+const MIN_BASES_OK       = 3;
+const MAX_PARTS_PER_COLOR = 6;
+const MAX_TOTAL_PARTS    = 10;
+
+const DEFAULT_BASES = [
+  { id: 'd-yellow', name: '黃', sub: 'infin.Lin 096M',  hex: '#E5B23C', tintStrength: 1.0, source: 'default', note: '' },
+  { id: 'd-red',    name: '紅', sub: 'infin.Lin Red',   hex: '#C81E28', tintStrength: 1.0, source: 'default', note: '' },
+  { id: 'd-blue',   name: '藍', sub: 'infin.Lin 156M',  hex: '#3E8ED0', tintStrength: 1.0, source: 'default', note: '' },
+  { id: 'd-white',  name: '白', sub: 'infin.Lin White', hex: '#EDECE7', tintStrength: 1.0, source: 'default', note: '' },
+  { id: 'd-black',  name: '黑', sub: 'infin.Lin Black', hex: '#0F0F0F', tintStrength: 3.0, source: 'default', note: '' },
+];
+
+let BASES = [];
+
+/* ========== Storage ========== */
+function loadBases() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_BASES));
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('empty');
+    return parsed.map(b => ({
+      id: b.id || genId(),
+      name: b.name || '?',
+      sub: b.sub || '',
+      hex: isValidHex(b.hex) ? normalizeHex(b.hex) : '#888888',
+      tintStrength: typeof b.tintStrength === 'number' && b.tintStrength > 0 ? b.tintStrength : 1.0,
+      source: b.source || 'default',
+      note: b.note || '',
+    }));
+  } catch (err) {
+    console.warn('localStorage load failed; using defaults', err);
+    return JSON.parse(JSON.stringify(DEFAULT_BASES));
+  }
+}
+function saveBases() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(BASES));
+  } catch (err) {
+    console.warn('localStorage save failed', err);
+  }
+}
+function genId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'b-' + Math.random().toString(36).slice(2, 11);
+}
+
+/* ========== Color utilities ========== */
+function hexToRgb(hex) {
+  const h = hex.replace('#','');
+  return [
+    parseInt(h.slice(0,2), 16),
+    parseInt(h.slice(2,4), 16),
+    parseInt(h.slice(4,6), 16),
+  ];
+}
+function rgbToHex(rgb) {
+  return '#' + rgb.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function isValidHex(s) {
+  return typeof s === 'string' && /^#?[0-9a-fA-F]{6}$/.test(s.trim());
+}
+function normalizeHex(s) {
+  let v = String(s).trim().toUpperCase();
+  if (!v.startsWith('#')) v = '#' + v;
+  return v;
+}
+
+/* ========== Mixbox latent cache ========== */
+const LATENT_SIZE = mixbox.LATENT_SIZE; // = 7
+function rebuildLatents() {
+  BASES.forEach(b => {
+    b.rgb = hexToRgb(b.hex);
+    b.latent = mixbox.rgbToLatent(b.rgb[0], b.rgb[1], b.rgb[2]);
+  });
+}
+function mixMixbox(parts) {
+  let total = 0;
+  const eff = new Array(parts.length);
+  for (let i=0; i<parts.length; i++) {
+    eff[i] = parts[i] * BASES[i].tintStrength;
+    total += eff[i];
+  }
+  if (total === 0) return [255, 255, 255];
+  const z = new Array(LATENT_SIZE).fill(0);
+  for (let i=0; i<parts.length; i++) {
+    if (eff[i] === 0) continue;
+    const w = eff[i] / total;
+    const L = BASES[i].latent;
+    for (let j=0; j<LATENT_SIZE; j++) z[j] += L[j] * w;
+  }
+  return mixbox.latentToRgb(z);
+}
+
+/* ========== sRGB → Lab ========== */
+function srgbToLinear(c) {
+  c /= 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+function rgbToLab(rgb) {
+  const r = srgbToLinear(rgb[0]);
+  const g = srgbToLinear(rgb[1]);
+  const b = srgbToLinear(rgb[2]);
+  let X = r * 0.4124564 + g * 0.3575761 + b * 0.1804375;
+  let Y = r * 0.2126729 + g * 0.7151522 + b * 0.0721750;
+  let Z = r * 0.0193339 + g * 0.1191920 + b * 0.9503041;
+  X /= 0.95047; Y /= 1.00000; Z /= 1.08883;
+  const f = (t) => t > 0.008856 ? Math.cbrt(t) : (7.787 * t + 16/116);
+  const fx = f(X), fy = f(Y), fz = f(Z);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+
+/* ========== CIEDE2000 ========== */
+function deltaE2000(lab1, lab2) {
+  const [L1, a1, b1] = lab1;
+  const [L2, a2, b2] = lab2;
+  const avgL = (L1 + L2) / 2;
+  const C1 = Math.hypot(a1, b1);
+  const C2 = Math.hypot(a2, b2);
+  const avgC = (C1 + C2) / 2;
+  const G = 0.5 * (1 - Math.sqrt(Math.pow(avgC, 7) / (Math.pow(avgC, 7) + Math.pow(25, 7))));
+  const a1p = a1 * (1 + G);
+  const a2p = a2 * (1 + G);
+  const C1p = Math.hypot(a1p, b1);
+  const C2p = Math.hypot(a2p, b2);
+  const avgCp = (C1p + C2p) / 2;
+  const h1p = (Math.atan2(b1, a1p) * 180 / Math.PI + 360) % 360;
+  const h2p = (Math.atan2(b2, a2p) * 180 / Math.PI + 360) % 360;
+  let deltahp;
+  if (Math.abs(h1p - h2p) <= 180) deltahp = h2p - h1p;
+  else if (h2p <= h1p) deltahp = h2p - h1p + 360;
+  else deltahp = h2p - h1p - 360;
+  const deltaLp = L2 - L1;
+  const deltaCp = C2p - C1p;
+  const deltaHp = 2 * Math.sqrt(C1p * C2p) * Math.sin(deltahp * Math.PI / 360);
+  let avgHp;
+  if (Math.abs(h1p - h2p) > 180) avgHp = (h1p + h2p + 360) / 2;
+  else avgHp = (h1p + h2p) / 2;
+  const T = 1
+    - 0.17 * Math.cos((avgHp - 30) * Math.PI / 180)
+    + 0.24 * Math.cos((2 * avgHp) * Math.PI / 180)
+    + 0.32 * Math.cos((3 * avgHp + 6) * Math.PI / 180)
+    - 0.20 * Math.cos((4 * avgHp - 63) * Math.PI / 180);
+  const deltaTheta = 30 * Math.exp(-Math.pow((avgHp - 275) / 25, 2));
+  const Rc = 2 * Math.sqrt(Math.pow(avgCp, 7) / (Math.pow(avgCp, 7) + Math.pow(25, 7)));
+  const Sl = 1 + (0.015 * Math.pow(avgL - 50, 2)) / Math.sqrt(20 + Math.pow(avgL - 50, 2));
+  const Sc = 1 + 0.045 * avgCp;
+  const Sh = 1 + 0.015 * avgCp * T;
+  const Rt = -Math.sin(2 * deltaTheta * Math.PI / 180) * Rc;
+  return Math.sqrt(
+    Math.pow(deltaLp / Sl, 2) +
+    Math.pow(deltaCp / Sc, 2) +
+    Math.pow(deltaHp / Sh, 2) +
+    Rt * (deltaCp / Sc) * (deltaHp / Sh)
+  );
+}
+
+/* ========== Recursive recipe search (動態 N) ========== */
+let _bestScore, _best, _targetLab;
+function findBestRecipe(targetRgb) {
+  _targetLab = rgbToLab(targetRgb);
+  _bestScore = Infinity;
+  _best = null;
+  const N = BASES.length;
+  if (N === 0) return null;
+  const parts = new Array(N).fill(0);
+  searchRec(parts, 0, MAX_TOTAL_PARTS);
+  return _best;
+}
+function searchRec(parts, idx, remaining) {
+  const N = BASES.length;
+  if (idx === N) {
+    let total = 0;
+    for (let i=0; i<N; i++) total += parts[i];
+    if (total === 0) return;
+    const mixed = mixMixbox(parts);
+    const dE = deltaE2000(_targetLab, rgbToLab(mixed));
+    const score = dE + total * 0.03;
+    if (score < _bestScore) {
+      _bestScore = score;
+      _best = { parts: parts.slice(), mixed, deltaE: dE, total };
+    }
+    return;
+  }
+  const max = Math.min(MAX_PARTS_PER_COLOR, remaining);
+  for (let k = 0; k <= max; k++) {
+    parts[idx] = k;
+    searchRec(parts, idx + 1, remaining - k);
+  }
+  parts[idx] = 0;
+}
+
+/* ========== Misc helpers ========== */
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+function simplifyRatio(arr) {
+  const nonzero = arr.filter(v => v > 0);
+  if (nonzero.length === 0) return arr.slice();
+  let g = nonzero[0];
+  for (let i=1; i<nonzero.length; i++) g = gcd(g, nonzero[i]);
+  return arr.map(v => v / g);
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
+}
+
+/* ========== UI: Tab navigation ========== */
+const tabbarBtns = document.querySelectorAll('.tabbar-btn');
+const views = {
+  mix:   document.getElementById('view-mix'),
+  saved: document.getElementById('view-saved'),
+  bases: document.getElementById('view-bases'),
+  me:    document.getElementById('view-me'),
+};
+function switchView(name) {
+  Object.entries(views).forEach(([k, el]) => { el.hidden = (k !== name); });
+  tabbarBtns.forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  if (name === 'bases') renderBases();
+  window.scrollTo(0, 0);
+}
+tabbarBtns.forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
+
+/* ========== Mix view: image upload & pick ========== */
+const fileInput     = document.getElementById('fileInput');
+const canvas        = document.getElementById('canvas');
+const canvasWrap    = document.getElementById('canvasWrap');
+const crosshair     = document.getElementById('crosshair');
+const hint          = document.getElementById('hint');
+const emptyState    = document.getElementById('emptyState');
+const calcState     = document.getElementById('calcState');
+const resultContent = document.getElementById('resultContent');
+const targetSwatch  = document.getElementById('targetSwatch');
+const targetHex     = document.getElementById('targetHex');
+const predictSwatch = document.getElementById('predictSwatch');
+const predictHex    = document.getElementById('predictHex');
+const recipeList    = document.getElementById('recipeList');
+const ratioSummary  = document.getElementById('ratioSummary');
+const accuracy      = document.getElementById('accuracy');
+const gamutWarning  = document.getElementById('gamutWarning');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+let currentImage = null;
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      currentImage = img;
+      drawImage(img, canvas, ctx, canvasWrap);
+      canvasWrap.classList.add('has-image');
+      hint.style.display = 'block';
+      crosshair.classList.remove('show');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function drawImage(img, cvs, c, wrap) {
+  const maxW = wrap.clientWidth || 480;
+  const scale = Math.min(1, maxW / img.width);
+  cvs.width  = Math.round(img.width * scale);
+  cvs.height = Math.round(img.height * scale);
+  c.drawImage(img, 0, 0, cvs.width, cvs.height);
+}
+
+function pickFromCanvas(cvs, c, ch, clientX, clientY) {
+  const rect = cvs.getBoundingClientRect();
+  const x = (clientX - rect.left) * (cvs.width  / rect.width);
+  const y = (clientY - rect.top ) * (cvs.height / rect.height);
+  if (x < 0 || y < 0 || x >= cvs.width || y >= cvs.height) return null;
+  const size = 5;
+  const sx = Math.max(0, Math.floor(x - size/2));
+  const sy = Math.max(0, Math.floor(y - size/2));
+  const w = Math.min(size, cvs.width  - sx);
+  const h = Math.min(size, cvs.height - sy);
+  const data = c.getImageData(sx, sy, w, h).data;
+  let r=0, g=0, b=0, n=0;
+  for (let i=0; i<data.length; i+=4) {
+    r += data[i]; g += data[i+1]; b += data[i+2]; n++;
+  }
+  ch.style.left = ((clientX - rect.left) / rect.width  * 100) + '%';
+  ch.style.top  = ((clientY - rect.top ) / rect.height * 100) + '%';
+  ch.classList.add('show');
+  return [Math.round(r/n), Math.round(g/n), Math.round(b/n)];
+}
+
+canvas.addEventListener('click', (e) => {
+  const rgb = pickFromCanvas(canvas, ctx, crosshair, e.clientX, e.clientY);
+  if (rgb) onPickTarget(rgb);
+});
+canvas.addEventListener('touchend', (e) => {
+  if (e.changedTouches.length > 0) {
+    const t = e.changedTouches[0];
+    const rgb = pickFromCanvas(canvas, ctx, crosshair, t.clientX, t.clientY);
+    if (rgb) onPickTarget(rgb);
+    e.preventDefault();
+  }
+}, { passive: false });
+
+function onPickTarget(target) {
+  emptyState.hidden = true;
+  resultContent.hidden = true;
+  calcState.hidden = false;
+  setTimeout(() => showResult(target), 20);
+}
+
+function showResult(target) {
+  if (BASES.length === 0) {
+    calcState.hidden = true;
+    emptyState.hidden = false;
+    emptyState.innerHTML = '<div>請先到「基底色」分頁新增至少一個基底色</div>';
+    return;
+  }
+  const best = findBestRecipe(target);
+  if (!best) {
+    calcState.hidden = true;
+    emptyState.hidden = false;
+    return;
+  }
+  calcState.hidden = true;
+  resultContent.hidden = false;
+
+  targetSwatch.style.background  = `rgb(${target.join(',')})`;
+  targetHex.textContent = rgbToHex(target);
+
+  const mixed = best.mixed.map(v => Math.max(0, Math.min(255, Math.round(v))));
+  predictSwatch.style.background = `rgb(${mixed.join(',')})`;
+  predictHex.textContent = rgbToHex(mixed);
+
+  recipeList.innerHTML = '';
+  BASES.forEach((base, i) => {
+    const parts = best.parts[i];
+    const row = document.createElement('div');
+    row.className = 'recipe-row' + (parts === 0 ? ' zero' : '');
+    row.innerHTML = `
+      <div class="color-dot" style="background:${base.hex}"></div>
+      <div class="recipe-info">
+        <div class="name">${escapeHtml(base.name)}</div>
+        ${base.sub ? `<div class="sub">${escapeHtml(base.sub)}</div>` : ''}
+      </div>
+      <div class="recipe-parts">${parts}<span class="unit">份</span></div>
+    `;
+    recipeList.appendChild(row);
+  });
+
+  const simp = simplifyRatio(best.parts).map(v => Math.round(v));
+  const namesShort = BASES.map(b => b.name).join(':');
+  ratioSummary.textContent = `比例 ${simp.join(' : ')}  （${namesShort}）`;
+
+  const dE = best.deltaE;
+  let level, color;
+  if (dE < 2)       { level = '肉眼幾乎無差'; color = '#2ECC71'; }
+  else if (dE < 5)  { level = '非常接近';     color = '#27AE60'; }
+  else if (dE < 10) { level = '接近';         color = '#F1C40F'; }
+  else if (dE < 20) { level = '中等';         color = '#F39C12'; }
+  else              { level = '差距較大';     color = '#E74C3C'; }
+  accuracy.innerHTML = `<span class="accuracy-dot" style="background:${color}"></span>色差 <span class="accuracy-de">ΔE ${dE.toFixed(1)}</span> · ${level}`;
+
+  if (dE > 15) {
+    gamutWarning.hidden = false;
+    gamutWarning.innerHTML = `<b>⚠️ 色域不足</b><br>此目標色在你目前的 ${BASES.length} 個基底色組合下難以精確調出，建議到「基底色」分頁新增缺少的色相基底。`;
+  } else {
+    gamutWarning.hidden = true;
+  }
+}
+
+/* ========== Bases view ========== */
+const basesList    = document.getElementById('basesList');
+const baseCount    = document.getElementById('baseCount');
+const basesWarning = document.getElementById('basesWarning');
+
+function renderBases() {
+  basesList.innerHTML = '';
+  BASES.forEach(base => {
+    const item = document.createElement('div');
+    item.className = 'base-item';
+    item.innerHTML = `
+      <div class="base-swatch" style="background:${base.hex}"></div>
+      <div class="base-info">
+        <div class="name">${escapeHtml(base.name)}</div>
+        <div class="meta">${escapeHtml(base.sub || base.hex)} · ×${base.tintStrength.toFixed(1)}${base.note ? ' · ' + escapeHtml(base.note) : ''}</div>
+      </div>
+      <div class="base-actions">
+        <button class="icon-btn" data-act="edit" data-id="${base.id}" aria-label="編輯">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </button>
+        <button class="icon-btn" data-act="delete" data-id="${base.id}" aria-label="刪除">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    `;
+    basesList.appendChild(item);
+  });
+
+  baseCount.textContent = `共 ${BASES.length} / ${MAX_BASES} 個基底色`;
+
+  if (BASES.length < MIN_BASES_OK) {
+    basesWarning.hidden = false;
+    basesWarning.className = 'gamut-warning';
+    basesWarning.innerHTML = `<b>⚠️ 基底色不足</b><br>少於 ${MIN_BASES_OK} 個基底會讓多數目標色色域內無法調出，建議至少保留 ${MIN_BASES_OK} 個。`;
+  } else {
+    basesWarning.hidden = true;
+  }
+}
+
+basesList.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  if (btn.dataset.act === 'edit') openModal(id);
+  else if (btn.dataset.act === 'delete') deleteBase(id);
+});
+
+function deleteBase(id) {
+  const base = BASES.find(b => b.id === id);
+  if (!base) return;
+  if (BASES.length <= 1) {
+    alert('至少需要保留 1 個基底色');
+    return;
+  }
+  if (!confirm(`確定要刪除「${base.name}」嗎？`)) return;
+  BASES = BASES.filter(b => b.id !== id);
+  saveBases();
+  rebuildLatents();
+  renderBases();
+}
+
+document.getElementById('addBaseBtn').addEventListener('click', () => {
+  if (BASES.length >= MAX_BASES) {
+    alert(`基底色已達上限 ${MAX_BASES} 個`);
+    return;
+  }
+  openModal(null);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('確定要重置為預設 5 色？目前的所有自訂會被清掉。')) return;
+  BASES = JSON.parse(JSON.stringify(DEFAULT_BASES));
+  saveBases();
+  rebuildLatents();
+  renderBases();
+  alert('已重置為預設 5 色');
+});
+
+/* ========== Modal: Add / Edit Base ========== */
+const baseModal       = document.getElementById('baseModal');
+const modalTitle      = document.getElementById('modalTitle');
+const modalClose      = document.getElementById('modalClose');
+const modalCancel     = document.getElementById('modalCancel');
+const modalSave       = document.getElementById('modalSave');
+const modalFileInput  = document.getElementById('modalFileInput');
+const modalCanvas     = document.getElementById('modalCanvas');
+const modalCanvasWrap = document.getElementById('modalCanvasWrap');
+const modalCrosshair  = document.getElementById('modalCrosshair');
+const modalHint       = document.getElementById('modalHint');
+const modalCtx        = modalCanvas.getContext('2d', { willReadFrequently: true });
+const samplePreview   = document.getElementById('samplePreview');
+const sampleSwatch    = document.getElementById('sampleSwatch');
+const sampleHex       = document.getElementById('sampleHex');
+const hexInput        = document.getElementById('hexInput');
+const baseNameInput   = document.getElementById('baseName');
+const baseSubInput    = document.getElementById('baseSub');
+const baseTintSelect  = document.getElementById('baseTint');
+const baseTintCustom  = document.getElementById('baseTintCustom');
+const baseNoteInput   = document.getElementById('baseNote');
+
+let editingId = null;
+let modalImage = null;
+let pendingHex = null;
+
+window.addEventListener('resize', () => {
+  if (currentImage) drawImage(currentImage, canvas, ctx, canvasWrap);
+  if (modalImage)  drawImage(modalImage, modalCanvas, modalCtx, modalCanvasWrap);
+});
+
+function openModal(id) {
+  editingId = id;
+  modalImage = null;
+  pendingHex = null;
+  modalCanvasWrap.classList.remove('has-image');
+  modalHint.style.display = 'none';
+  samplePreview.hidden = true;
+  modalCrosshair.classList.remove('show');
+  hexInput.value = '';
+  baseTintCustom.hidden = true;
+  baseTintCustom.value = '';
+
+  if (id) {
+    const b = BASES.find(x => x.id === id);
+    if (!b) return;
+    modalTitle.textContent = '編輯基底色';
+    baseNameInput.value = b.name;
+    baseSubInput.value = b.sub;
+    baseNoteInput.value = b.note || '';
+    pendingHex = b.hex;
+    sampleSwatch.style.background = b.hex;
+    sampleHex.textContent = b.hex;
+    samplePreview.hidden = false;
+    const t = b.tintStrength;
+    if (t === 1.0 || t === 2.0 || t === 3.0) {
+      baseTintSelect.value = t.toFixed(1);
+    } else {
+      baseTintSelect.value = 'custom';
+      baseTintCustom.hidden = false;
+      baseTintCustom.value = t;
+    }
+    switchModalTab('hex');
+    hexInput.value = b.hex;
+  } else {
+    modalTitle.textContent = '新增基底色';
+    baseNameInput.value = '';
+    baseSubInput.value = '';
+    baseNoteInput.value = '';
+    baseTintSelect.value = '1.0';
+    switchModalTab('image');
+  }
+  baseModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  baseModal.hidden = true;
+  document.body.style.overflow = '';
+}
+modalClose.addEventListener('click', closeModal);
+modalCancel.addEventListener('click', closeModal);
+baseModal.addEventListener('click', (e) => {
+  if (e.target === baseModal) closeModal();
+});
+
+document.querySelectorAll('.tabs-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchModalTab(btn.dataset.tab));
+});
+function switchModalTab(name) {
+  document.querySelectorAll('.tabs-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.getElementById('tab-image').hidden = (name !== 'image');
+  document.getElementById('tab-hex').hidden = (name !== 'hex');
+}
+
+modalFileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      modalImage = img;
+      drawImage(img, modalCanvas, modalCtx, modalCanvasWrap);
+      modalCanvasWrap.classList.add('has-image');
+      modalHint.style.display = 'block';
+      modalCrosshair.classList.remove('show');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+modalCanvas.addEventListener('click', (e) => {
+  const rgb = pickFromCanvas(modalCanvas, modalCtx, modalCrosshair, e.clientX, e.clientY);
+  if (rgb) onSamplePicked(rgb);
+});
+modalCanvas.addEventListener('touchend', (e) => {
+  if (e.changedTouches.length > 0) {
+    const t = e.changedTouches[0];
+    const rgb = pickFromCanvas(modalCanvas, modalCtx, modalCrosshair, t.clientX, t.clientY);
+    if (rgb) onSamplePicked(rgb);
+    e.preventDefault();
+  }
+}, { passive: false });
+
+function onSamplePicked(rgb) {
+  const hex = rgbToHex(rgb);
+  pendingHex = hex;
+  sampleSwatch.style.background = hex;
+  sampleHex.textContent = hex;
+  samplePreview.hidden = false;
+  hexInput.value = hex;
+}
+
+hexInput.addEventListener('input', () => {
+  const v = hexInput.value.trim();
+  if (isValidHex(v)) {
+    const hex = normalizeHex(v);
+    pendingHex = hex;
+    sampleSwatch.style.background = hex;
+    sampleHex.textContent = hex;
+    samplePreview.hidden = false;
+  }
+});
+
+baseTintSelect.addEventListener('change', () => {
+  if (baseTintSelect.value === 'custom') {
+    baseTintCustom.hidden = false;
+    if (!baseTintCustom.value) baseTintCustom.value = '1.0';
+    baseTintCustom.focus();
+  } else {
+    baseTintCustom.hidden = true;
+  }
+});
+
+modalSave.addEventListener('click', () => {
+  const name = baseNameInput.value.trim();
+  if (!name) { alert('請填寫名稱'); baseNameInput.focus(); return; }
+  if (!pendingHex || !isValidHex(pendingHex)) { alert('請先採樣或輸入正確色號'); return; }
+
+  let tint;
+  if (baseTintSelect.value === 'custom') {
+    tint = parseFloat(baseTintCustom.value);
+    if (!isFinite(tint) || tint <= 0 || tint > 5) {
+      alert('著色力必須介於 0.2 ~ 5.0');
+      baseTintCustom.focus();
+      return;
+    }
+  } else {
+    tint = parseFloat(baseTintSelect.value);
+  }
+
+  const data = {
+    name,
+    sub: baseSubInput.value.trim(),
+    hex: normalizeHex(pendingHex),
+    tintStrength: tint,
+    note: baseNoteInput.value.trim(),
+  };
+
+  if (editingId) {
+    const idx = BASES.findIndex(b => b.id === editingId);
+    if (idx >= 0) BASES[idx] = { ...BASES[idx], ...data };
+  } else {
+    BASES.push({
+      id: genId(),
+      ...data,
+      source: modalImage ? 'image' : 'hex',
+    });
+  }
+  saveBases();
+  rebuildLatents();
+  renderBases();
+  closeModal();
+});
+
+/* ========== Init ========== */
+BASES = loadBases();
+rebuildLatents();
+switchView('mix');
+</script>
+</body>
+</html>
