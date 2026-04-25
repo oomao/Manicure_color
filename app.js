@@ -296,6 +296,7 @@ async function initRecordOnce() {
       await MediaDB.init();
       await Works.init();
       await Plans.init();
+      if (window.Calendar && Calendar.init) Calendar.init();
     } catch (err) {
       console.warn('Record init failed', err);
     }

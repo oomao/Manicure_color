@@ -1,8 +1,9 @@
 /* =============================================================================
    plans.js — 美甲計劃(做之前)
    - DB store: plans
-   - 一個計劃 = 標題 + 多張靈感參考圖 + 預計步驟 + 備註
-   - 步驟結構與 works 相同(配方連結 + 自由文字 + 材料多選 + 備註)
+   - 一個計劃 = 標題 + 計劃日期 + 預計實行(選填) + 多張靈感 + 預計步驟 + 備註
+   - 步驟 = 標題 + 多個調色配方 + 材料多選 + 備註
+   - 狀態:active(實行中) / draft(未完成) / completed(已完成)
    ============================================================================= */
 (function () {
   const STORE = 'plans';
@@ -14,12 +15,18 @@
   let _galleryItems = [];
   let _editingId = null;
   let _draft = null;
+  let _searchTerm = '';
+  let _dateFrom = '';
+  let _dateTo = '';
+  let _detailTimerRaf = null;
 
-  let elGrid, elEmpty, elAddBtn;
+  let elGrid, elEmpty, elAddBtn, elSections;
+  let elSearch, elDateFrom, elDateTo, elDateClear, elCalendarBtn;
   let elEditModal, elEditTitleH, elEditClose, elEditCancel, elEditSave, elEditDelete;
   let elTitle, elNote, elInspGrid, elInspEmpty, elStepsList, elAddStepBtn;
-  let elDetailModal, elDetailClose, elDetailBody, elDetailEdit;
-  let elDetailStart, elDetailComplete, elDetailReopen;
+  let elPlanDate, elPlanScheduledDate;
+  let elDetailModal, elDetailClose, elDetailBody, elDetailEdit, elDetailDelete;
+  let elDetailStart, elDetailComplete, elDetailReopen, elDetailPause, elDetailResume;
 
   function $(id) { return document.getElementById(id); }
 
@@ -27,6 +34,12 @@
     elGrid = $('plansGrid');
     elEmpty = $('plansEmpty');
     elAddBtn = $('plansAddBtn');
+    elSections = $('plansSections');
+    elSearch = $('plansSearch');
+    elDateFrom = $('plansDateFrom');
+    elDateTo = $('plansDateTo');
+    elDateClear = $('plansDateClear');
+    elCalendarBtn = $('plansCalendarBtn');
 
     elEditModal  = $('planEditModal');
     elEditTitleH = $('planEditTitleH');
@@ -36,6 +49,8 @@
     elEditDelete = $('planEditDelete');
     elTitle      = $('planTitle');
     elNote       = $('planNote');
+    elPlanDate   = $('planDate');
+    elPlanScheduledDate = $('planScheduledDate');
     elInspGrid   = $('planInspGrid');
     elInspEmpty  = $('planInspEmpty');
     elStepsList  = $('planStepsList');
@@ -45,9 +60,12 @@
     elDetailClose = $('planDetailClose');
     elDetailBody  = $('planDetailBody');
     elDetailEdit  = $('planDetailEdit');
+    elDetailDelete = $('planDetailDelete');
     elDetailStart    = $('planDetailStart');
     elDetailComplete = $('planDetailComplete');
     elDetailReopen   = $('planDetailReopen');
+    elDetailPause    = $('planDetailPause');
+    elDetailResume   = $('planDetailResume');
 
     _items = await MediaDB.getAll(STORE);
     _items.sort((a, b) => b.updatedAt - a.updatedAt);
@@ -82,16 +100,43 @@
       closeDetailModal();
       if (id) openEditModal(id);
     });
+    elDetailDelete && elDetailDelete.addEventListener('click', onDeleteFromDetail);
     elDetailStart    && elDetailStart   .addEventListener('click', onStartActive);
     elDetailComplete && elDetailComplete.addEventListener('click', onCompletePlan);
     elDetailReopen   && elDetailReopen  .addEventListener('click', onReopenPlan);
+    elDetailPause    && elDetailPause   .addEventListener('click', onPauseTimer);
+    elDetailResume   && elDetailResume  .addEventListener('click', onResumeTimer);
 
-    elGrid.addEventListener('click', (e) => {
+    elSections.addEventListener('click', (e) => {
       const card = e.target.closest('.lib-card');
       if (card && card.dataset.id) openDetailModal(card.dataset.id);
     });
 
-    // 靈感選取
+    if (elSearch) {
+      elSearch.addEventListener('input', () => {
+        _searchTerm = elSearch.value.trim().toLowerCase();
+        renderGrid();
+      });
+    }
+    const onDateChange = () => {
+      _dateFrom = elDateFrom.value || '';
+      _dateTo = elDateTo.value || '';
+      renderGrid();
+    };
+    if (elDateFrom) elDateFrom.addEventListener('change', onDateChange);
+    if (elDateTo)   elDateTo.addEventListener('change', onDateChange);
+    if (elDateClear) elDateClear.addEventListener('click', () => {
+      _dateFrom = ''; _dateTo = '';
+      elDateFrom.value = ''; elDateTo.value = '';
+      renderGrid();
+    });
+
+    if (elCalendarBtn) {
+      elCalendarBtn.addEventListener('click', () => {
+        if (window.Calendar && Calendar.open) Calendar.open();
+      });
+    }
+
     elInspGrid.addEventListener('click', (e) => {
       const tile = e.target.closest('.plan-insp-tile');
       if (!tile || !_draft) return;
@@ -102,56 +147,150 @@
       tile.classList.toggle('selected');
     });
 
-    // 步驟事件委派
     elStepsList.addEventListener('click', onStepListClick);
     elStepsList.addEventListener('input', onStepListInput);
     elStepsList.addEventListener('change', onStepListChange);
   }
 
-  /* ---------- Render grid ---------- */
+  /* ---------- 資料 helper ---------- */
+  // 取步驟的配方陣列(向下相容單一 recipeId/recipeText)
+  function getRecipes(s) {
+    if (Array.isArray(s.recipes) && s.recipes.length) return s.recipes;
+    if (s.recipeId || s.recipeText) {
+      return [{ recipeId: s.recipeId || '', recipeText: s.recipeText || '' }];
+    }
+    return [];
+  }
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function fmtDateOnly(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return '';
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function dateInputToTs(s) {
+    if (!s) return null;
+    const t = new Date(s).getTime();
+    return isNaN(t) ? null : t;
+  }
+  function tsToDateInput(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return '';
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  // 計算 active 計劃當下的累積經過時間
+  function getElapsedMs(it) {
+    if (!it || it.status !== 'active') return 0;
+    const acc = it.accumulatedMs || 0;
+    if (it.timerPaused) return acc;
+    if (it.timerStartedAt) return acc + (Date.now() - it.timerStartedAt);
+    return acc;
+  }
+
+  /* ---------- Render grid (3 區塊) ---------- */
+  function passesFilter(it) {
+    if (_searchTerm) {
+      const hay = [
+        it.title || '',
+        it.note || '',
+        ...(it.steps || []).map(s => s.title || ''),
+      ].join(' ').toLowerCase();
+      if (!hay.includes(_searchTerm)) return false;
+    }
+    if (_dateFrom || _dateTo) {
+      const ts = it.scheduledDate || it.planDate || it.createdAt || 0;
+      const fromTs = _dateFrom ? new Date(_dateFrom).getTime() : -Infinity;
+      const toTs   = _dateTo   ? new Date(_dateTo).getTime() + 24*60*60*1000 - 1 : Infinity;
+      if (ts < fromTs || ts > toTs) return false;
+    }
+    return true;
+  }
+
   function renderGrid() {
+    const filtered = _items.filter(passesFilter);
     if (_items.length === 0) {
-      elGrid.innerHTML = '';
+      elSections.innerHTML = '';
       elEmpty.hidden = false;
-      elEmpty.textContent = '還沒有任何計劃,點右上角「新增計劃」開始';
+      elEmpty.textContent = '還沒有任何計劃,點上方「新增」開始';
+      return;
+    }
+    if (filtered.length === 0) {
+      elSections.innerHTML = '';
+      elEmpty.hidden = false;
+      elEmpty.textContent = '沒有符合條件的計劃';
       return;
     }
     elEmpty.hidden = true;
-    // 實行中排在最前
-    const ordered = _items.slice().sort((a, b) => {
-      const aActive = a.status === 'active' ? 1 : 0;
-      const bActive = b.status === 'active' ? 1 : 0;
-      if (aActive !== bActive) return bActive - aActive;
-      return b.updatedAt - a.updatedAt;
-    });
-    elGrid.innerHTML = ordered.map(it => {
-      const firstInspId = (it.inspirationIds || [])[0];
-      let coverUrl = '';
-      if (firstInspId) {
-        const insp = _galleryItems.find(g => g.id === firstInspId);
-        if (insp && insp.thumbBlob) coverUrl = ImgUtils.urlFor(insp.thumbBlob);
-      }
-      const stepCount = (it.steps || []).length;
-      const inspCount = (it.inspirationIds || []).length;
-      const status = it.status || 'draft';
-      const statusLabel = status === 'active' ? '實行中' : (status === 'completed' ? '已完成' : '草稿');
-      const meta = [
-        inspCount ? `${inspCount} 張靈感` : '',
-        stepCount ? `${stepCount} 步驟` : '',
-      ].filter(Boolean).join(' · ');
+
+    const groups = {
+      active:    filtered.filter(it => it.status === 'active'),
+      draft:     filtered.filter(it => (it.status || 'draft') === 'draft'),
+      completed: filtered.filter(it => it.status === 'completed'),
+    };
+    groups.active   .sort((a,b) => (b.timerStartedAt||0) - (a.timerStartedAt||0));
+    groups.draft    .sort((a,b) => (b.scheduledDate||b.updatedAt) - (a.scheduledDate||a.updatedAt));
+    groups.completed.sort((a,b) => (b.completedAt||b.updatedAt) - (a.completedAt||a.updatedAt));
+
+    const sections = [
+      { key: 'active',    label: '正在進行中', cls: 'plans-section-active',  list: groups.active,    emptyText: '目前沒有正在進行的計劃' },
+      { key: 'draft',     label: '未完成',     cls: 'plans-section-pending', list: groups.draft,     emptyText: '沒有待實行的計劃' },
+      { key: 'completed', label: '已完成',     cls: 'plans-section-done',    list: groups.completed, emptyText: '尚未完成任何計劃' },
+    ];
+
+    elSections.innerHTML = sections.map(sec => {
+      const cards = sec.list.map(it => cardHtml(it, sec.key)).join('');
       return `
-        <div class="lib-card" data-id="${it.id}">
-          <div class="lib-thumb">${coverUrl ? `<img src="${coverUrl}" alt="" loading="lazy">` : '<div class="lib-thumb-empty">📋</div>'}</div>
-          <div class="lib-info">
-            <div class="lib-name">${escapeHtml(it.title || '(未命名)')}</div>
-            <div class="lib-meta">
-              <span class="plan-status plan-status-${status}">${statusLabel}</span>
-              ${meta ? `<span class="plan-meta-rest"> · ${escapeHtml(meta)}</span>` : ''}
-            </div>
+        <div class="plans-section ${sec.cls}">
+          <div class="plans-section-head">
+            <span class="plans-section-dot"></span>${sec.label}
+            <span class="plans-section-count">${sec.list.length}</span>
           </div>
+          ${sec.list.length ? `<div class="lib-grid">${cards}</div>` : `<div class="plans-section-empty">${sec.emptyText}</div>`}
         </div>
       `;
     }).join('');
+  }
+
+  function cardHtml(it, sectionKey) {
+    const firstInspId = (it.inspirationIds || [])[0];
+    let coverUrl = '';
+    if (firstInspId) {
+      const insp = _galleryItems.find(g => g.id === firstInspId);
+      if (insp && insp.thumbBlob) coverUrl = ImgUtils.urlFor(insp.thumbBlob);
+    }
+    const stepCount = (it.steps || []).length;
+    const inspCount = (it.inspirationIds || []).length;
+    const meta = [
+      inspCount ? `${inspCount} 張靈感` : '',
+      stepCount ? `${stepCount} 步驟` : '',
+    ].filter(Boolean).join(' · ');
+
+    let when = '';
+    if (sectionKey === 'completed' && it.completedAt) {
+      when = `✓ ${fmtDateOnly(it.completedAt)} 完成`;
+    } else if (sectionKey === 'active') {
+      when = `🔴 ${fmtDateOnly(it.timerStartedAt || it.startedAt)} 開始`;
+    } else if (it.scheduledDate) {
+      when = `📅 ${fmtDateOnly(it.scheduledDate)}`;
+    } else if (it.planDate) {
+      when = `📝 ${fmtDateOnly(it.planDate)}`;
+    }
+
+    return `
+      <div class="lib-card" data-id="${it.id}">
+        <div class="lib-thumb">${coverUrl ? `<img src="${coverUrl}" alt="" loading="lazy">` : '<div class="lib-thumb-empty">📋</div>'}</div>
+        <div class="lib-info">
+          <div class="lib-name">${escapeHtml(it.title || '(未命名)')}</div>
+          ${when ? `<div class="plan-when">${escapeHtml(when)}</div>` : ''}
+          ${meta ? `<div class="lib-meta">${escapeHtml(meta)}</div>` : ''}
+        </div>
+      </div>
+    `;
   }
 
   /* ---------- Edit modal ---------- */
@@ -166,18 +305,35 @@
       _draft = {
         title: it.title || '',
         note: it.note || '',
+        planDate: it.planDate || it.createdAt || Date.now(),
+        scheduledDate: it.scheduledDate || null,
         inspirationIds: (it.inspirationIds || []).slice(),
-        steps: (it.steps || []).map(s => ({ ...s })),
+        steps: (it.steps || []).map(s => ({
+          id: s.id,
+          title: s.title || '',
+          recipes: getRecipes(s).map(r => ({ recipeId: r.recipeId || '', recipeText: r.recipeText || '' })),
+          materialIds: Array.isArray(s.materialIds) ? s.materialIds.slice() : [],
+          note: s.note || '',
+        })),
       };
       elEditDelete.hidden = false;
     } else {
       elEditTitleH.textContent = '新增計劃';
-      _draft = { title: '', note: '', inspirationIds: [], steps: [] };
+      _draft = {
+        title: '',
+        note: '',
+        planDate: Date.now(),
+        scheduledDate: null,
+        inspirationIds: [],
+        steps: [],
+      };
       elEditDelete.hidden = true;
     }
 
     elTitle.value = _draft.title;
     elNote.value = _draft.note;
+    elPlanDate.value = tsToDateInput(_draft.planDate);
+    elPlanScheduledDate.value = tsToDateInput(_draft.scheduledDate);
     renderInspirationPicker();
     renderStepsList();
     elEditModal.hidden = false;
@@ -193,7 +349,7 @@
     if (_galleryItems.length === 0) {
       elInspGrid.innerHTML = '';
       elInspEmpty.hidden = false;
-      elInspEmpty.textContent = '靈感圖庫是空的,請先到「靈感」分頁新增';
+      elInspEmpty.textContent = '靈感圖庫是空的,請先到「圖庫 → 靈感」新增';
       return;
     }
     elInspEmpty.hidden = true;
@@ -209,14 +365,13 @@
     }).join('');
   }
 
-  /* ---------- Steps editor (與 works 相同邏輯,但無步驟照片) ---------- */
+  /* ---------- Steps editor ---------- */
   function addStep() {
     if (!_draft) return;
     _draft.steps.push({
       id: MediaDB.genId(),
       title: '',
-      recipeId: '',
-      recipeText: '',
+      recipes: [],
       materialIds: [],
       note: '',
     });
@@ -232,14 +387,30 @@
     elStepsList.innerHTML = _draft.steps.map((s, i) => stepHtml(s, i)).join('');
   }
 
-  function stepHtml(s, i) {
+  function recipeRowHtml(r, stepIdx, recipeIdx) {
     const recipeOpts = ['<option value="">— 不連結配方 —</option>']
-      .concat(_recipes.map(r => `<option value="${escapeAttr(r.id)}"${r.id === s.recipeId ? ' selected' : ''}>${escapeHtml(r.name || r.targetHex)}</option>`))
+      .concat(_recipes.map(rc => `<option value="${escapeAttr(rc.id)}"${rc.id === r.recipeId ? ' selected' : ''}>${escapeHtml(rc.name || rc.targetHex)}</option>`))
       .join('');
+    return `
+      <div class="step-recipe-item" data-recipe="${recipeIdx}">
+        <div class="recipe-row-head">
+          <span class="recipe-row-no">配方 ${recipeIdx + 1}</span>
+          <button type="button" class="recipe-row-del" data-act="del-recipe" title="刪除這個配方">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+        <select class="select" data-field="recipeId">${recipeOpts}</select>
+        <textarea class="input" rows="2" data-field="recipeText" placeholder="例:白 4 + 紅 1 + 一點黃" maxlength="200" style="margin-top:6px;">${escapeHtml(r.recipeText || '')}</textarea>
+      </div>
+    `;
+  }
+
+  function stepHtml(s, i) {
     const matChips = _materials.map(m => {
       const active = (s.materialIds || []).includes(m.id) ? ' active' : '';
       return `<button type="button" class="chip chip-pick step-mat-chip${active}" data-mat="${escapeAttr(m.id)}" data-step="${i}">${escapeHtml(m.name || '?')}</button>`;
     }).join('');
+    const recipesHtml = (s.recipes || []).map((r, ri) => recipeRowHtml(r, i, ri)).join('');
 
     return `
       <div class="step-card" data-step="${i}">
@@ -248,18 +419,17 @@
           <div class="step-actions">
             ${i > 0 ? `<button type="button" class="step-icon-btn" data-act="up" title="上移">↑</button>` : ''}
             ${i < _draft.steps.length - 1 ? `<button type="button" class="step-icon-btn" data-act="down" title="下移">↓</button>` : ''}
-            <button type="button" class="step-icon-btn step-del" data-act="del" title="刪除步驟">✕</button>
+            <button type="button" class="step-icon-btn step-del" data-act="del" title="刪除步驟">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
           </div>
         </div>
         <input type="text" class="input step-title" data-field="title" value="${escapeAttr(s.title || '')}" placeholder="步驟標題,例:底色、漸層暈染" maxlength="40">
 
         <div class="field" style="margin-top:10px;">
-          <label class="field-label">調色配方(連結)</label>
-          <select class="select" data-field="recipeId">${recipeOpts}</select>
-        </div>
-        <div class="field">
-          <label class="field-label">調色邏輯/比例文字</label>
-          <textarea class="input" rows="2" data-field="recipeText" placeholder="例:白 4 + 紅 1 + 一點黃" maxlength="200">${escapeHtml(s.recipeText || '')}</textarea>
+          <label class="field-label">調色配方(可多個)</label>
+          <div class="step-recipes-list">${recipesHtml}</div>
+          <button type="button" class="btn btn-secondary step-add-recipe" data-act="add-recipe">+ 新增調色配方</button>
         </div>
 
         <div class="field">
@@ -294,6 +464,17 @@
       } else if (act === 'down' && i < _draft.steps.length - 1) {
         [_draft.steps[i], _draft.steps[i+1]] = [_draft.steps[i+1], _draft.steps[i]];
         renderStepsList();
+      } else if (act === 'add-recipe') {
+        _draft.steps[i].recipes = _draft.steps[i].recipes || [];
+        _draft.steps[i].recipes.push({ recipeId: '', recipeText: '' });
+        renderStepsList();
+      } else if (act === 'del-recipe') {
+        const rItem = e.target.closest('.step-recipe-item');
+        if (rItem) {
+          const ri = +rItem.dataset.recipe;
+          _draft.steps[i].recipes.splice(ri, 1);
+          renderStepsList();
+        }
       }
       return;
     }
@@ -316,8 +497,14 @@
     const i = +card.dataset.step;
     const f = e.target.dataset.field;
     if (!f) return;
-    if (['title', 'recipeText', 'note'].includes(f)) {
+    if (f === 'title' || f === 'note') {
       _draft.steps[i][f] = e.target.value;
+    } else if (f === 'recipeText') {
+      const rItem = e.target.closest('.step-recipe-item');
+      if (rItem) {
+        const ri = +rItem.dataset.recipe;
+        _draft.steps[i].recipes[ri].recipeText = e.target.value;
+      }
     }
   }
 
@@ -327,7 +514,13 @@
     if (!card) return;
     const i = +card.dataset.step;
     const f = e.target.dataset.field;
-    if (f === 'recipeId') _draft.steps[i].recipeId = e.target.value;
+    if (f === 'recipeId') {
+      const rItem = e.target.closest('.step-recipe-item');
+      if (rItem) {
+        const ri = +rItem.dataset.recipe;
+        _draft.steps[i].recipes[ri].recipeId = e.target.value;
+      }
+    }
   }
 
   /* ---------- Save / Delete ---------- */
@@ -339,11 +532,19 @@
       return;
     }
     const noteVal = (elNote.value || '').trim().slice(0, 500);
+    const planDate = dateInputToTs(elPlanDate.value) || Date.now();
+    const scheduledDate = dateInputToTs(elPlanScheduledDate.value);
+
     const stepsToSave = _draft.steps.map(s => ({
       id: s.id,
       title: (s.title || '').slice(0, 40),
-      recipeId: s.recipeId || '',
-      recipeText: (s.recipeText || '').slice(0, 200),
+      recipes: (s.recipes || []).map(r => ({
+        recipeId: r.recipeId || '',
+        recipeText: (r.recipeText || '').slice(0, 200),
+      })),
+      // 維持向下相容 — 第一筆同步寫入舊欄位
+      recipeId: (s.recipes && s.recipes[0]) ? (s.recipes[0].recipeId || '') : '',
+      recipeText: (s.recipes && s.recipes[0]) ? (s.recipes[0].recipeText || '').slice(0, 200) : '',
       materialIds: Array.isArray(s.materialIds) ? s.materialIds.slice() : [],
       note: (s.note || '').slice(0, 200),
     }));
@@ -357,6 +558,8 @@
           ...old,
           title,
           note: noteVal,
+          planDate,
+          scheduledDate,
           inspirationIds: _draft.inspirationIds.slice(),
           steps: stepsToSave,
           updatedAt: now,
@@ -368,6 +571,8 @@
           id: MediaDB.genId(),
           title,
           note: noteVal,
+          planDate,
+          scheduledDate,
           inspirationIds: _draft.inspirationIds.slice(),
           steps: stepsToSave,
           status: 'draft',
@@ -400,13 +605,32 @@
     }
   }
 
+  async function onDeleteFromDetail() {
+    const id = elDetailModal.dataset.planId;
+    if (!id) return;
+    if (!confirm('確定刪除此計劃?無法復原。')) return;
+    try {
+      await MediaDB.del(STORE, id);
+      _items = _items.filter(x => x.id !== id);
+      renderGrid();
+      closeDetailModal();
+    } catch (err) {
+      alert('刪除失敗:' + (err.message || err));
+    }
+  }
+
   /* ---------- Detail view ---------- */
   async function openDetailModal(id) {
     const it = _items.find(x => x.id === id);
     if (!it) return;
     await reloadDeps();
     elDetailModal.dataset.planId = id;
+    renderDetailBody(it);
+    elDetailModal.hidden = false;
+    if (it.status === 'active') startDetailTimerLoop();
+  }
 
+  function renderDetailBody(it) {
     const inspBlock = (it.inspirationIds || []).map(iid => {
       const g = _galleryItems.find(x => x.id === iid);
       if (!g) return '';
@@ -417,16 +641,55 @@
     const stepsHtml = (it.steps || []).map((s, i) => detailStepHtml(s, i)).join('');
 
     const status = it.status || 'draft';
-    const statusLabel = status === 'active' ? '🔴 實行中' : (status === 'completed' ? '✅ 已完成' : '📝 草稿');
+    const statusLabel = status === 'active'
+      ? '🔴 實行中'
+      : (status === 'completed' ? '✅ 已完成' : '📝 未完成');
+
+    // 時間 / 排程資訊
+    const dateInfo = [];
+    if (it.planDate)      dateInfo.push(`📝 計劃於 ${fmtDateOnly(it.planDate)}`);
+    if (it.scheduledDate) dateInfo.push(`📅 預計 ${fmtDateOnly(it.scheduledDate)}`);
+    if (it.completedAt)   dateInfo.push(`✓ ${fmtDateOnly(it.completedAt)} 完成`);
+    const dateBlock = dateInfo.length ? `<div class="lib-meta" style="font-size:12px;margin-bottom:8px;">${dateInfo.join(' · ')}</div>` : '';
+
+    // 計時 panel(僅 active 顯示)
+    let timerBlock = '';
+    if (status === 'active') {
+      const isPaused = !!it.timerPaused;
+      const ms = getElapsedMs(it);
+      const t = fmtTimer(ms);
+      timerBlock = `
+        <div class="plan-d-timer" data-plan-timer>
+          <div class="plan-d-timer-label">已實行時間</div>
+          <div class="plan-d-timer-time" data-timer-display>${t.main}<span class="cs">.${t.cs}</span></div>
+          <div class="plan-d-timer-state ${isPaused ? 'is-paused' : 'is-running'}" data-timer-state>${isPaused ? '已暫停' : '進行中'}</div>
+        </div>
+      `;
+    }
+
+    // 材料總結
+    const matIds = new Set();
+    (it.steps || []).forEach(s => (s.materialIds || []).forEach(mid => matIds.add(mid)));
+    let matsBlock = '';
+    if (matIds.size > 0) {
+      const tags = Array.from(matIds).map(mid => {
+        const m = _materials.find(x => x.id === mid);
+        return m ? `<span class="plan-d-mat-tag">${escapeHtml(m.name || '?')}</span>` : '';
+      }).filter(Boolean).join('');
+      if (tags) {
+        matsBlock = `<h4 class="work-detail-section">使用材料總覽</h4><div class="plan-d-mats-summary">${tags}</div>`;
+      }
+    }
+
+    // 時間記錄
     const records = it.timeRecords || [];
     let recordsBlock = '';
     if (records.length) {
       const total = records.reduce((sum, r) => sum + (r.duration || 0), 0);
       const items = records.slice().reverse().map(r => {
         const d = formatDuration(r.duration || 0);
-        const t = r.finishedAt ? new Date(r.finishedAt).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-        const laps = r.lapCount ? ` · ${r.lapCount} 次計次` : '';
-        return `<div class="plan-d-time-row"><span class="plan-d-time-dur">${d}</span><span class="plan-d-time-when">${escapeHtml(t)}${laps}</span></div>`;
+        const tt = r.finishedAt ? new Date(r.finishedAt).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+        return `<div class="plan-d-time-row"><span class="plan-d-time-dur">${d}</span><span class="plan-d-time-when">${escapeHtml(tt)}</span></div>`;
       }).join('');
       recordsBlock = `
         <h4 class="work-detail-section">時間記錄(${records.length} 次,共 ${formatDuration(total)})</h4>
@@ -437,19 +700,59 @@
     elDetailBody.innerHTML = `
       <div class="plan-d-status">${statusLabel}</div>
       <h3 class="work-detail-title">${escapeHtml(it.title || '(未命名)')}</h3>
+      ${dateBlock}
+      ${timerBlock}
       ${it.note ? `<div class="work-detail-note">${escapeHtml(it.note)}</div>` : ''}
       ${inspBlock ? `<h4 class="work-detail-section">參考靈感</h4><div class="plan-d-insps">${inspBlock}</div>` : ''}
       <h4 class="work-detail-section">預計步驟</h4>
       ${stepsHtml || '<div class="hint" style="padding:8px 0;">沒有規劃步驟</div>'}
+      ${matsBlock}
       ${recordsBlock}
     `;
 
-    // 控制底部按鈕顯隱
+    // 底部按鈕顯隱
     elDetailStart.hidden    = status !== 'draft';
     elDetailComplete.hidden = status !== 'active';
     elDetailReopen.hidden   = status !== 'completed';
+    elDetailPause.hidden    = !(status === 'active' && !it.timerPaused);
+    elDetailResume.hidden   = !(status === 'active' && it.timerPaused);
+  }
 
-    elDetailModal.hidden = false;
+  function fmtTimer(ms) {
+    const total = Math.max(0, Math.floor(ms));
+    const cs = Math.floor((total % 1000) / 10);
+    const s  = Math.floor(total / 1000) % 60;
+    const m  = Math.floor(total / 60000) % 60;
+    const h  = Math.floor(total / 3600000);
+    const main = h > 0
+      ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+      : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    return { main, cs: String(cs).padStart(2,'0') };
+  }
+
+  function startDetailTimerLoop() {
+    stopDetailTimerLoop();
+    const tick = () => {
+      const id = elDetailModal.dataset.planId;
+      const it = _items.find(x => x.id === id);
+      if (!it || elDetailModal.hidden || it.status !== 'active') {
+        stopDetailTimerLoop();
+        return;
+      }
+      const display = elDetailBody.querySelector('[data-timer-display]');
+      if (display) {
+        const t = fmtTimer(getElapsedMs(it));
+        display.innerHTML = `${t.main}<span class="cs">.${t.cs}</span>`;
+      }
+      _detailTimerRaf = requestAnimationFrame(tick);
+    };
+    _detailTimerRaf = requestAnimationFrame(tick);
+  }
+  function stopDetailTimerLoop() {
+    if (_detailTimerRaf != null) {
+      cancelAnimationFrame(_detailTimerRaf);
+      _detailTimerRaf = null;
+    }
   }
 
   async function onStartActive() {
@@ -457,21 +760,58 @@
     if (!id) return;
     const it = _items.find(x => x.id === id);
     if (!it) return;
-    // 若有其他實行中,先把它降為草稿
+    // 若有其他實行中的,先暫停並降為草稿(保留累積時間 → 寫到 timeRecords)
     const others = _items.filter(x => x.id !== id && x.status === 'active');
     for (const o of others) {
+      const ms = getElapsedMs(o);
+      if (ms > 0) {
+        o.timeRecords = o.timeRecords || [];
+        o.timeRecords.push({ duration: ms, finishedAt: Date.now() });
+      }
       o.status = 'draft';
+      o.timerStartedAt = null;
+      o.accumulatedMs = 0;
+      o.timerPaused = false;
       o.updatedAt = Date.now();
       await MediaDB.put(STORE, o);
     }
     it.status = 'active';
-    it.startedAt = Date.now();
+    it.startedAt = it.startedAt || Date.now();
+    it.timerStartedAt = Date.now();
+    it.accumulatedMs = 0;
+    it.timerPaused = false;
     it.updatedAt = Date.now();
     await MediaDB.put(STORE, it);
-    closeDetailModal();
+    renderDetailBody(it);
     renderGrid();
-    if (window._showToast) window._showToast(`「${it.title}」已標記為實行中,開啟碼表開始計時`);
-    else alert(`「${it.title}」已標記為實行中。\n開啟碼表開始計時,暫停後可選擇是否記錄時間到計劃。`);
+    startDetailTimerLoop();
+  }
+
+  async function onPauseTimer() {
+    const id = elDetailModal.dataset.planId;
+    if (!id) return;
+    const it = _items.find(x => x.id === id);
+    if (!it || it.status !== 'active' || it.timerPaused) return;
+    it.accumulatedMs = (it.accumulatedMs || 0) + (Date.now() - (it.timerStartedAt || Date.now()));
+    it.timerPaused = true;
+    it.timerStartedAt = null;
+    it.updatedAt = Date.now();
+    await MediaDB.put(STORE, it);
+    renderDetailBody(it);
+    stopDetailTimerLoop();
+  }
+
+  async function onResumeTimer() {
+    const id = elDetailModal.dataset.planId;
+    if (!id) return;
+    const it = _items.find(x => x.id === id);
+    if (!it || it.status !== 'active' || !it.timerPaused) return;
+    it.timerPaused = false;
+    it.timerStartedAt = Date.now();
+    it.updatedAt = Date.now();
+    await MediaDB.put(STORE, it);
+    renderDetailBody(it);
+    startDetailTimerLoop();
   }
 
   async function onCompletePlan() {
@@ -479,11 +819,21 @@
     if (!id) return;
     const it = _items.find(x => x.id === id);
     if (!it) return;
-    if (!confirm('標記為已完成?之後仍可重新開啟。')) return;
+    if (!confirm('結束實行並標記為已完成?')) return;
+    // 把這次計時收進 timeRecords
+    const ms = getElapsedMs(it);
+    if (ms > 0) {
+      it.timeRecords = it.timeRecords || [];
+      it.timeRecords.push({ duration: ms, finishedAt: Date.now() });
+    }
     it.status = 'completed';
     it.completedAt = Date.now();
+    it.timerStartedAt = null;
+    it.accumulatedMs = 0;
+    it.timerPaused = false;
     it.updatedAt = Date.now();
     await MediaDB.put(STORE, it);
+    stopDetailTimerLoop();
     closeDetailModal();
     renderGrid();
   }
@@ -527,23 +877,31 @@
     renderGrid();
     return true;
   }
+  // 給 calendar 用
+  function getAll() { return _items.slice(); }
+  function openDetail(id) { openDetailModal(id); }
 
   function detailStepHtml(s, i) {
+    const recipes = getRecipes(s);
     let recipeBlock = '';
-    if (s.recipeId) {
-      const r = _recipes.find(x => x.id === s.recipeId);
-      if (r) {
-        const parts = (r.parts || []).map(p => `${escapeHtml(p.name)} ${p.parts}`).join(' + ');
-        recipeBlock = `
-          <div class="step-d-recipe">
-            <span class="step-d-swatch" style="background:${escapeAttr(r.targetHex || '#ccc')}"></span>
-            <span><b>${escapeHtml(r.name || r.targetHex)}</b>${parts ? ` — ${escapeHtml(parts)}` : ''}</span>
-          </div>
-        `;
-      }
-    }
-    if (s.recipeText) {
-      recipeBlock += `<div class="step-d-recipe-text">${escapeHtml(s.recipeText)}</div>`;
+    if (recipes.length) {
+      recipeBlock = recipes.map(r => {
+        let inner = '';
+        if (r.recipeId) {
+          const rc = _recipes.find(x => x.id === r.recipeId);
+          if (rc) {
+            const parts = (rc.parts || []).map(p => `${escapeHtml(p.name)} ${p.parts}`).join(' + ');
+            inner = `
+              <div class="step-d-recipe">
+                <span class="step-d-swatch" style="background:${escapeAttr(rc.targetHex || '#ccc')}"></span>
+                <span><b>${escapeHtml(rc.name || rc.targetHex)}</b>${parts ? ` — ${escapeHtml(parts)}` : ''}</span>
+              </div>
+            `;
+          }
+        }
+        if (r.recipeText) inner += `<div class="step-d-recipe-text">${escapeHtml(r.recipeText)}</div>`;
+        return inner;
+      }).join('');
     }
     let matsBlock = '';
     if (s.materialIds && s.materialIds.length) {
@@ -563,7 +921,10 @@
     `;
   }
 
-  function closeDetailModal() { elDetailModal.hidden = true; }
+  function closeDetailModal() {
+    elDetailModal.hidden = true;
+    stopDetailTimerLoop();
+  }
 
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({
@@ -572,5 +933,5 @@
   }
   function escapeAttr(s) { return escapeHtml(s); }
 
-  window.Plans = { init, getActive, recordTime };
+  window.Plans = { init, getActive, recordTime, getAll, openDetail };
 })();

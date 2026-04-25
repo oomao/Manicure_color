@@ -17,8 +17,15 @@
   let _filterStyle = 'all';
   let _editingId = null;
   let _stagedImg = null;
-  let _selectedColor = null;
+  let _selectedColors = new Set();
   let _selectedStyles = new Set();
+
+  // 取得項目的色系陣列(支援舊資料 colorFamily 字串)
+  function getColors(it) {
+    if (Array.isArray(it.colorFamilies)) return it.colorFamilies;
+    if (it.colorFamily) return [it.colorFamily];
+    return [];
+  }
 
   let elGrid, elEmpty, elChipsColor, elChipsStyle, elAddBtn;
   let elModal, elModalTitle, elModalClose, elModalCancel, elModalSave;
@@ -89,7 +96,7 @@
     const colorOpts = ['all'].concat(_colors);
     const colorHtml = colorOpts.map(c => {
       const label = c === 'all' ? '全色系' : c;
-      const count = c === 'all' ? _items.length : _items.filter(it => it.colorFamily === c).length;
+      const count = c === 'all' ? _items.length : _items.filter(it => getColors(it).includes(c)).length;
       const active = c === _filterColor ? ' active' : '';
       return `<button class="chip${active}" data-color="${escapeHtml(c)}">${escapeHtml(label)} <span class="chip-n">${count}</span></button>`;
     }).join('');
@@ -133,12 +140,18 @@
       onDelete: async (name) => {
         { const idx = _colors.indexOf(name); if (idx >= 0) _colors.splice(idx, 1); }
         await MediaDB.setCategoryDef(COLOR_KEY, _colors);
-        const affected = _items.filter(it => it.colorFamily === name);
+        const affected = _items.filter(it => getColors(it).includes(name));
         for (const it of affected) {
+          if (Array.isArray(it.colorFamilies)) {
+            it.colorFamilies = it.colorFamilies.filter(c => c !== name);
+          } else if (it.colorFamily === name) {
+            it.colorFamilies = [];
+          }
           it.colorFamily = '';
           it.updatedAt = Date.now();
           await MediaDB.put(STORE, it);
         }
+        _selectedColors.delete(name);
         if (_filterColor === name) _filterColor = 'all';
       },
       onChange: () => {
@@ -180,7 +193,7 @@
 
   function renderGrid() {
     let list = _items.slice();
-    if (_filterColor !== 'all') list = list.filter(it => it.colorFamily === _filterColor);
+    if (_filterColor !== 'all') list = list.filter(it => getColors(it).includes(_filterColor));
     if (_filterStyle !== 'all') list = list.filter(it => Array.isArray(it.styles) && it.styles.includes(_filterStyle));
     if (list.length === 0) {
       elGrid.innerHTML = '';
@@ -193,7 +206,7 @@
     elEmpty.hidden = true;
     elGrid.innerHTML = list.map(it => {
       const url = ImgUtils.urlFor(it.thumbBlob);
-      const tags = [it.colorFamily, ...(it.styles || [])].filter(Boolean).slice(0, 3).join(' · ');
+      const tags = [...getColors(it), ...(it.styles || [])].filter(Boolean).slice(0, 3).join(' · ');
       return `
         <div class="lib-card" data-id="${it.id}">
           <div class="lib-thumb"><img src="${url}" alt="${escapeHtml(it.name || '')}" loading="lazy"></div>
@@ -210,7 +223,7 @@
   function openModal(id) {
     _editingId = id;
     _stagedImg = null;
-    _selectedColor = null;
+    _selectedColors = new Set();
     _selectedStyles = new Set();
 
     if (id) {
@@ -219,7 +232,7 @@
       elModalTitle.textContent = '編輯靈感';
       elName.value = it.name || '';
       elNote.value = it.note || '';
-      _selectedColor = it.colorFamily || null;
+      getColors(it).forEach(c => _selectedColors.add(c));
       (it.styles || []).forEach(s => _selectedStyles.add(s));
       const url = ImgUtils.urlFor(it.thumbBlob);
       elPreview.innerHTML = `<img src="${url}" alt="">`;
@@ -244,12 +257,14 @@
 
   function renderColorPicker() {
     elColorPicker.innerHTML = _colors.map(c => {
-      const active = c === _selectedColor ? ' active' : '';
+      const active = _selectedColors.has(c) ? ' active' : '';
       return `<button type="button" class="chip chip-pick${active}" data-c="${escapeHtml(c)}">${escapeHtml(c)}</button>`;
     }).join('');
     elColorPicker.querySelectorAll('.chip').forEach(btn => {
       btn.addEventListener('click', () => {
-        _selectedColor = (_selectedColor === btn.dataset.c) ? null : btn.dataset.c;
+        const v = btn.dataset.c;
+        if (_selectedColors.has(v)) _selectedColors.delete(v);
+        else _selectedColors.add(v);
         renderColorPicker();
       });
     });
@@ -288,14 +303,15 @@
   async function onSave() {
     const name = (elName.value || '').trim().slice(0, 30);
     const note = (elNote.value || '').trim().slice(0, 200);
-    const colorFamily = _selectedColor || '';
+    const colorFamilies = Array.from(_selectedColors).slice(0, 8);
+    const colorFamily = colorFamilies[0] || '';
     const styles = Array.from(_selectedStyles).slice(0, 12);
     const now = Date.now();
     try {
       if (_editingId) {
         const old = _items.find(x => x.id === _editingId);
         if (!old) return;
-        const updated = { ...old, name, note, colorFamily, styles, updatedAt: now };
+        const updated = { ...old, name, note, colorFamily, colorFamilies, styles, updatedAt: now };
         if (_stagedImg) {
           updated.blob = _stagedImg.fullBlob;
           updated.thumbBlob = _stagedImg.thumbBlob;
@@ -306,7 +322,7 @@
         if (!_stagedImg) { alert('請選一張照片'); return; }
         const rec = {
           id: MediaDB.genId(),
-          name, note, colorFamily, styles,
+          name, note, colorFamily, colorFamilies, styles,
           blob: _stagedImg.fullBlob,
           thumbBlob: _stagedImg.thumbBlob,
           createdAt: now,

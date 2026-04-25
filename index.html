@@ -9,8 +9,8 @@
 <meta name="theme-color" content="#FAFAFA">
 <title>美甲調色</title>
 <script src="https://scrtwpns.com/mixbox.js"></script>
-<link rel="stylesheet" href="styles.css?v=9">
-<script src="js/theme.js?v=9"></script>
+<link rel="stylesheet" href="styles.css?v=10">
+<script src="js/theme.js?v=10"></script>
 </head>
 <body>
 <main>
@@ -200,23 +200,49 @@
 
     <!-- Sub-pane: 計劃 -->
     <div class="lib-pane" id="record-pane-plans" hidden>
-      <div class="lib-toolbar lib-toolbar-end">
+      <div class="lib-toolbar">
+        <div class="saved-search" style="margin:0;flex:1;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="plansSearch" placeholder="搜尋計劃" />
+        </div>
+        <button class="btn btn-secondary lib-icon-btn" id="plansCalendarBtn" type="button" title="日曆檢視">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </button>
         <button class="btn btn-primary lib-add-btn" id="plansAddBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
-          新增計劃
+          新增
         </button>
       </div>
-      <div class="lib-grid" id="plansGrid"></div>
+      <div class="lib-toolbar plans-date-toolbar" style="margin-top:-2px;">
+        <input type="date" class="input plans-date-input" id="plansDateFrom" placeholder="起">
+        <span class="hint" style="margin:0;">~</span>
+        <input type="date" class="input plans-date-input" id="plansDateTo" placeholder="迄">
+        <button class="btn btn-ghost" id="plansDateClear" type="button" style="font-size:12px;padding:4px 8px;">清除</button>
+      </div>
+      <div id="plansSections"></div>
       <div class="empty lib-empty" id="plansEmpty"></div>
     </div>
 
     <!-- Sub-pane: 作品 -->
     <div class="lib-pane" id="record-pane-works" hidden>
-      <div class="lib-toolbar lib-toolbar-end">
+      <div class="lib-toolbar">
+        <div class="saved-search" style="margin:0;flex:1;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="worksSearch" placeholder="搜尋作品" />
+        </div>
+        <button class="btn btn-secondary lib-icon-btn" id="worksCalendarBtn" type="button" title="日曆檢視">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </button>
         <button class="btn btn-primary lib-add-btn" id="worksAddBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
-          新增作品
+          新增
         </button>
+      </div>
+      <div class="lib-toolbar plans-date-toolbar" style="margin-top:-2px;">
+        <input type="date" class="input plans-date-input" id="worksDateFrom" placeholder="起">
+        <span class="hint" style="margin:0;">~</span>
+        <input type="date" class="input plans-date-input" id="worksDateTo" placeholder="迄">
+        <button class="btn btn-ghost" id="worksDateClear" type="button" style="font-size:12px;padding:4px 8px;">清除</button>
       </div>
       <div class="lib-grid" id="worksGrid"></div>
       <div class="empty lib-empty" id="worksEmpty"></div>
@@ -656,9 +682,14 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" id="matDelete" hidden>刪除</button>
+      <button class="btn btn-danger btn-icon-only" id="matDelete" hidden title="刪除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
       <button class="btn btn-secondary" id="matModalCancel">取消</button>
-      <button class="btn btn-primary" id="matModalSave">儲存</button>
+      <button class="btn btn-primary" id="matModalSave">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+        儲存
+      </button>
     </div>
   </div>
 </div>
@@ -688,7 +719,7 @@
       </div>
       <div class="field">
         <label class="field-label" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>色系(單選)</span>
+          <span>色系(可複選)</span>
           <button class="btn btn-ghost" id="galManageColorBtn" type="button" style="font-size:12px;padding:2px 6px;">✏️ 管理</button>
         </label>
         <div class="lib-chips lib-chips-pick" id="galColorPicker"></div>
@@ -706,9 +737,14 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" id="galDelete" hidden>刪除</button>
+      <button class="btn btn-danger btn-icon-only" id="galDelete" hidden title="刪除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
       <button class="btn btn-secondary" id="galModalCancel">取消</button>
-      <button class="btn btn-primary" id="galModalSave">儲存</button>
+      <button class="btn btn-primary" id="galModalSave">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+        儲存
+      </button>
     </div>
   </div>
 </div>
@@ -780,7 +816,13 @@
       </div>
       <div class="field">
         <label class="field-label">日期</label>
-        <input type="date" class="input" id="workDate">
+        <input type="date" class="input input-date" id="workDate">
+      </div>
+      <div class="field">
+        <label class="field-label">對應計劃(選填)</label>
+        <select class="select" id="workPlanId">
+          <option value="">— 不連結計劃 —</option>
+        </select>
       </div>
       <div class="field">
         <label class="field-label">整體備註(選填)</label>
@@ -792,9 +834,14 @@
       <button class="btn btn-secondary btn-block" id="workAddStepBtn" type="button" style="margin-top:8px;">+ 新增步驟</button>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" id="workEditDelete" hidden>刪除</button>
+      <button class="btn btn-danger btn-icon-only" id="workEditDelete" hidden title="刪除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
       <button class="btn btn-secondary" id="workEditCancel">取消</button>
-      <button class="btn btn-primary" id="workEditSave">儲存</button>
+      <button class="btn btn-primary" id="workEditSave">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+        儲存
+      </button>
     </div>
   </div>
 </div>
@@ -813,6 +860,16 @@
         <label class="field-label">計劃標題</label>
         <input type="text" class="input" id="planTitle" maxlength="40" placeholder="例:春日法式漸層仿做計劃">
       </div>
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">計劃日期</label>
+          <input type="date" class="input input-date" id="planDate">
+        </div>
+        <div class="field">
+          <label class="field-label">預計實行(選填)</label>
+          <input type="date" class="input input-date" id="planScheduledDate">
+        </div>
+      </div>
       <div class="field">
         <label class="field-label">整體想法 / 備註(選填)</label>
         <textarea class="input" id="planNote" rows="2" maxlength="500" placeholder="例:整體想模仿這個感覺,但配色偏暖一點..."></textarea>
@@ -827,9 +884,14 @@
       <button class="btn btn-secondary btn-block" id="planAddStepBtn" type="button" style="margin-top:8px;">+ 新增步驟</button>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" id="planEditDelete" hidden>刪除</button>
+      <button class="btn btn-danger btn-icon-only" id="planEditDelete" hidden title="刪除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
       <button class="btn btn-secondary" id="planEditCancel">取消</button>
-      <button class="btn btn-primary" id="planEditSave">儲存</button>
+      <button class="btn btn-primary" id="planEditSave">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+        儲存
+      </button>
     </div>
   </div>
 </div>
@@ -845,10 +907,18 @@
     </div>
     <div class="modal-body" id="planDetailBody"></div>
     <div class="modal-footer plan-detail-footer">
-      <button class="btn btn-secondary" id="planDetailEdit">編輯</button>
+      <button class="btn btn-secondary plan-detail-btn-edit" id="planDetailEdit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        編輯
+      </button>
       <button class="btn btn-primary" id="planDetailStart" hidden>▶ 開始實行</button>
-      <button class="btn btn-primary" id="planDetailComplete" hidden>✓ 標記完成</button>
+      <button class="btn btn-secondary" id="planDetailPause" hidden>⏸ 暫停</button>
+      <button class="btn btn-primary" id="planDetailResume" hidden>▶ 繼續</button>
+      <button class="btn btn-primary" id="planDetailComplete" hidden>✓ 結束</button>
       <button class="btn btn-secondary" id="planDetailReopen" hidden>↺ 重新開啟</button>
+      <button class="btn btn-danger plan-detail-btn-del" id="planDetailDelete" title="刪除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
     </div>
   </div>
 </div>
@@ -865,6 +935,39 @@
     <div class="modal-body" id="workDetailBody"></div>
     <div class="modal-footer">
       <button class="btn btn-primary btn-block" id="workDetailEdit">編輯</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: 日曆 ============ -->
+<div class="modal-overlay" id="calendarModal" hidden>
+  <div class="modal" style="max-width: 460px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="calendarModalTitle">日曆</h2>
+      <button class="icon-btn" id="calendarClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="cal-nav">
+        <button class="icon-btn cal-nav-btn" id="calPrev" aria-label="上個月">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="cal-month" id="calMonthLabel"></div>
+        <button class="icon-btn cal-nav-btn" id="calNext" aria-label="下個月">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="cal-legend">
+        <span class="cal-legend-item"><span class="cal-dot cal-dot-plan"></span>預計實行</span>
+        <span class="cal-legend-item"><span class="cal-dot cal-dot-work"></span>作品</span>
+      </div>
+      <div class="cal-weekdays">
+        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <h4 class="work-detail-section" id="calDayTitle" hidden>當日項目</h4>
+      <div class="cal-day-list" id="calDayList"></div>
     </div>
   </div>
 </div>
@@ -921,15 +1024,16 @@
   </div>
 </div>
 
-<script src="js/calibration.js?v=9"></script>
-<script src="js/media-db.js?v=9"></script>
-<script src="js/img-utils.js?v=9"></script>
-<script src="js/cat-manager.js?v=9"></script>
-<script src="js/materials.js?v=9"></script>
-<script src="js/gallery.js?v=9"></script>
-<script src="js/works.js?v=9"></script>
-<script src="js/plans.js?v=9"></script>
-<script src="js/inspire-picker.js?v=9"></script>
-<script src="app.js?v=9"></script>
+<script src="js/calibration.js?v=10"></script>
+<script src="js/media-db.js?v=10"></script>
+<script src="js/img-utils.js?v=10"></script>
+<script src="js/cat-manager.js?v=10"></script>
+<script src="js/materials.js?v=10"></script>
+<script src="js/gallery.js?v=10"></script>
+<script src="js/works.js?v=10"></script>
+<script src="js/plans.js?v=10"></script>
+<script src="js/inspire-picker.js?v=10"></script>
+<script src="js/calendar.js?v=10"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>

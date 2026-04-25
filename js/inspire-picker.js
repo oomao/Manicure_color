@@ -44,7 +44,8 @@
         elEmpty.hidden = true;
         elGrid.innerHTML = items.map(it => {
           const url = ImgUtils.urlFor(it.thumbBlob);
-          const tags = [it.colorFamily, ...(it.styles || [])].filter(Boolean).slice(0, 2).join(' · ');
+          const colors = Array.isArray(it.colorFamilies) ? it.colorFamilies : (it.colorFamily ? [it.colorFamily] : []);
+          const tags = [...colors, ...(it.styles || [])].filter(Boolean).slice(0, 2).join(' · ');
           return `
             <div class="lib-card" data-id="${it.id}">
               <div class="lib-thumb"><img src="${url}" alt="" loading="lazy"></div>

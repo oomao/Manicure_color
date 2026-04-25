@@ -1,23 +1,27 @@
 /* =============================================================================
    works.js — 美甲作品紀錄
    - DB store: works
-   - 每個作品 = 封面 + 標題 + 日期 + 步驟陣列
-   - 每個步驟 = 標題 + 照片(可選)+ 配方(連 SAVED 或自由文字)+ 材料 + 備註
+   - 每個作品 = 封面 + 標題 + 日期 + (可連結計劃) + 步驟陣列
+   - 每個步驟 = 標題 + 照片 + 多個調色配方 + 材料 + 備註
    ============================================================================= */
 (function () {
   const STORE = 'works';
-  const SAVED_KEY = 'nail-color-mixer.saved.v1'; // 收藏配方(localStorage)
+  const SAVED_KEY = 'nail-color-mixer.saved.v1';
 
-  let _items = [];        // 作品列表
-  let _materials = [];    // 從 IDB 撈出的材料(供步驟選用)
-  let _recipes = [];      // 從 localStorage 撈出的收藏配方
+  let _items = [];
+  let _materials = [];
+  let _recipes = [];
+  let _plans = [];
   let _editingId = null;
-  let _draft = null;      // 編輯中的暫存 work
-  let _stepsDirty = false;
+  let _draft = null;
+  let _searchTerm = '';
+  let _dateFrom = '';
+  let _dateTo = '';
 
   let elGrid, elEmpty, elAddBtn;
+  let elSearch, elDateFrom, elDateTo, elDateClear, elCalendarBtn;
   let elEditModal, elEditTitle, elEditClose, elEditCancel, elEditSave, elEditDelete;
-  let elCoverFile, elCoverPreview, elTitle, elDate, elNote, elStepsList, elAddStepBtn;
+  let elCoverFile, elCoverPreview, elTitle, elDate, elPlanId, elNote, elStepsList, elAddStepBtn;
   let elDetailModal, elDetailClose, elDetailBody, elDetailEdit;
 
   function $(id) { return document.getElementById(id); }
@@ -26,6 +30,11 @@
     elGrid = $('worksGrid');
     elEmpty = $('worksEmpty');
     elAddBtn = $('worksAddBtn');
+    elSearch = $('worksSearch');
+    elDateFrom = $('worksDateFrom');
+    elDateTo = $('worksDateTo');
+    elDateClear = $('worksDateClear');
+    elCalendarBtn = $('worksCalendarBtn');
 
     elEditModal  = $('workEditModal');
     elEditTitle  = $('workEditTitleH');
@@ -37,6 +46,7 @@
     elCoverPreview = $('workCoverPreview');
     elTitle      = $('workTitle');
     elDate       = $('workDate');
+    elPlanId     = $('workPlanId');
     elNote       = $('workNote');
     elStepsList  = $('workStepsList');
     elAddStepBtn = $('workAddStepBtn');
@@ -56,6 +66,7 @@
 
   async function reloadDeps() {
     try { _materials = await MediaDB.getAll('materials'); } catch (_) { _materials = []; }
+    try { _plans = await MediaDB.getAll('plans'); _plans.sort((a,b) => b.updatedAt - a.updatedAt); } catch (_) { _plans = []; }
     try {
       const raw = localStorage.getItem(SAVED_KEY);
       _recipes = raw ? (JSON.parse(raw) || []) : [];
@@ -85,22 +96,81 @@
       if (card && card.dataset.id) openDetailModal(card.dataset.id);
     });
 
-    // Step list 事件委派
+    if (elSearch) {
+      elSearch.addEventListener('input', () => {
+        _searchTerm = elSearch.value.trim().toLowerCase();
+        renderGrid();
+      });
+    }
+    const onDateChange = () => {
+      _dateFrom = elDateFrom.value || '';
+      _dateTo = elDateTo.value || '';
+      renderGrid();
+    };
+    if (elDateFrom) elDateFrom.addEventListener('change', onDateChange);
+    if (elDateTo)   elDateTo.addEventListener('change', onDateChange);
+    if (elDateClear) elDateClear.addEventListener('click', () => {
+      _dateFrom = ''; _dateTo = '';
+      elDateFrom.value = ''; elDateTo.value = '';
+      renderGrid();
+    });
+
+    if (elCalendarBtn) {
+      elCalendarBtn.addEventListener('click', () => {
+        if (window.Calendar && Calendar.open) Calendar.open();
+      });
+    }
+
     elStepsList.addEventListener('click', onStepListClick);
     elStepsList.addEventListener('input', onStepListInput);
     elStepsList.addEventListener('change', onStepListChange);
   }
 
+  /* ---------- 資料 helper ---------- */
+  function getRecipes(s) {
+    if (Array.isArray(s.recipes) && s.recipes.length) return s.recipes;
+    if (s.recipeId || s.recipeText) {
+      return [{ recipeId: s.recipeId || '', recipeText: s.recipeText || '' }];
+    }
+    return [];
+  }
+
   /* ---------- Render grid ---------- */
   function renderGrid() {
+    let list = _items.slice();
+    if (_searchTerm) {
+      list = list.filter(it => {
+        const hay = [
+          it.title || '',
+          it.note || '',
+          ...(it.steps || []).map(s => s.title || ''),
+        ].join(' ').toLowerCase();
+        return hay.includes(_searchTerm);
+      });
+    }
+    if (_dateFrom || _dateTo) {
+      const fromTs = _dateFrom ? new Date(_dateFrom).getTime() : -Infinity;
+      const toTs   = _dateTo   ? new Date(_dateTo).getTime() + 24*60*60*1000 - 1 : Infinity;
+      list = list.filter(it => {
+        const t = it.date || it.createdAt || 0;
+        return t >= fromTs && t <= toTs;
+      });
+    }
+
     if (_items.length === 0) {
       elGrid.innerHTML = '';
       elEmpty.hidden = false;
-      elEmpty.textContent = '還沒有任何作品紀錄,點右上角「新增」開始記錄';
+      elEmpty.textContent = '還沒有任何作品紀錄,點上方「新增」開始記錄';
+      return;
+    }
+    if (list.length === 0) {
+      elGrid.innerHTML = '';
+      elEmpty.hidden = false;
+      elEmpty.textContent = '沒有符合條件的作品';
       return;
     }
     elEmpty.hidden = true;
-    elGrid.innerHTML = _items.map(it => {
+    elGrid.innerHTML = list.map(it => {
       const url = it.coverThumbBlob ? ImgUtils.urlFor(it.coverThumbBlob) : '';
       const dateStr = it.date ? formatDate(it.date) : '';
       const stepCount = (it.steps || []).length;
@@ -118,7 +188,7 @@
 
   /* ---------- Edit modal ---------- */
   async function openEditModal(id) {
-    await reloadDeps(); // 每次重抓最新材料/配方
+    await reloadDeps();
     _editingId = id;
 
     if (id) {
@@ -128,10 +198,16 @@
       _draft = JSON.parse(JSON.stringify({
         title: it.title || '',
         date: it.date || Date.now(),
+        planId: it.planId || '',
         note: it.note || '',
-        steps: it.steps || [],
+        steps: (it.steps || []).map(s => ({
+          id: s.id,
+          title: s.title || '',
+          recipes: getRecipes(s).map(r => ({ recipeId: r.recipeId || '', recipeText: r.recipeText || '' })),
+          materialIds: Array.isArray(s.materialIds) ? s.materialIds.slice() : [],
+          note: s.note || '',
+        })),
       }));
-      // blob 不能 JSON 序列化,額外保留
       _draft._coverBlob = it.coverBlob || null;
       _draft._coverThumbBlob = it.coverThumbBlob || null;
       _draft.steps.forEach((s, i) => {
@@ -141,9 +217,14 @@
       elEditDelete.hidden = false;
     } else {
       elEditTitle.textContent = '新增作品';
+      // 預設帶入目前 active 計劃(若有)
+      let prefillPlanId = '';
+      const active = _plans.find(p => p.status === 'active');
+      if (active) prefillPlanId = active.id;
       _draft = {
-        title: '',
+        title: active ? active.title : '',
         date: Date.now(),
+        planId: prefillPlanId,
         note: '',
         steps: [],
         _coverBlob: null,
@@ -155,10 +236,22 @@
     elTitle.value = _draft.title;
     elDate.value = toDateInput(_draft.date);
     elNote.value = _draft.note;
+    fillPlanSelect(_draft.planId);
     elCoverFile.value = '';
     renderCoverPreview();
     renderStepsList();
     elEditModal.hidden = false;
+  }
+
+  function fillPlanSelect(selectedId) {
+    if (!elPlanId) return;
+    const opts = ['<option value="">— 不連結計劃 —</option>'];
+    _plans.forEach(p => {
+      const stat = p.status === 'active' ? '🔴' : (p.status === 'completed' ? '✅' : '📝');
+      const sel = p.id === selectedId ? ' selected' : '';
+      opts.push(`<option value="${escapeAttr(p.id)}"${sel}>${stat} ${escapeHtml(p.title || '(未命名)')}</option>`);
+    });
+    elPlanId.innerHTML = opts.join('');
   }
 
   function closeEditModal() {
@@ -198,8 +291,7 @@
     _draft.steps.push({
       id: MediaDB.genId(),
       title: '',
-      recipeId: '',
-      recipeText: '',
+      recipes: [],
       materialIds: [],
       note: '',
       _photoBlob: null,
@@ -217,16 +309,32 @@
     elStepsList.innerHTML = _draft.steps.map((s, i) => stepHtml(s, i)).join('');
   }
 
+  function recipeRowHtml(r, recipeIdx) {
+    const recipeOpts = ['<option value="">— 不連結配方 —</option>']
+      .concat(_recipes.map(rc => `<option value="${escapeAttr(rc.id)}"${rc.id === r.recipeId ? ' selected' : ''}>${escapeHtml(rc.name || rc.targetHex)}</option>`))
+      .join('');
+    return `
+      <div class="step-recipe-item" data-recipe="${recipeIdx}">
+        <div class="recipe-row-head">
+          <span class="recipe-row-no">配方 ${recipeIdx + 1}</span>
+          <button type="button" class="recipe-row-del" data-act="del-recipe" title="刪除此配方">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+        <select class="select" data-field="recipeId">${recipeOpts}</select>
+        <textarea class="input" rows="2" data-field="recipeText" placeholder="例:白 4 + 紅 1 + 一點黃" maxlength="200" style="margin-top:6px;">${escapeHtml(r.recipeText || '')}</textarea>
+      </div>
+    `;
+  }
+
   function stepHtml(s, i) {
     const photoBlob = s._photoThumbBlob || s._photoBlob;
     const photoUrl = photoBlob ? URL.createObjectURL(photoBlob) : '';
-    const recipeOpts = ['<option value="">— 不連結配方 —</option>']
-      .concat(_recipes.map(r => `<option value="${escapeAttr(r.id)}"${r.id === s.recipeId ? ' selected' : ''}>${escapeHtml(r.name || r.targetHex)}</option>`))
-      .join('');
     const matChips = _materials.map(m => {
       const active = (s.materialIds || []).includes(m.id) ? ' active' : '';
       return `<button type="button" class="chip chip-pick step-mat-chip${active}" data-mat="${escapeAttr(m.id)}" data-step="${i}">${escapeHtml(m.name || '?')}</button>`;
     }).join('');
+    const recipesHtml = (s.recipes || []).map((r, ri) => recipeRowHtml(r, ri)).join('');
 
     return `
       <div class="step-card" data-step="${i}">
@@ -235,7 +343,9 @@
           <div class="step-actions">
             ${i > 0 ? `<button type="button" class="step-icon-btn" data-act="up" title="上移">↑</button>` : ''}
             ${i < _draft.steps.length - 1 ? `<button type="button" class="step-icon-btn" data-act="down" title="下移">↓</button>` : ''}
-            <button type="button" class="step-icon-btn step-del" data-act="del" title="刪除步驟">✕</button>
+            <button type="button" class="step-icon-btn step-del" data-act="del" title="刪除步驟">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
           </div>
         </div>
         <input type="text" class="input step-title" data-field="title" value="${escapeAttr(s.title || '')}" placeholder="步驟標題,例:底色、漸層暈染" maxlength="40">
@@ -249,12 +359,9 @@
         </label>
 
         <div class="field" style="margin-top:10px;">
-          <label class="field-label">調色配方(連結)</label>
-          <select class="select" data-field="recipeId">${recipeOpts}</select>
-        </div>
-        <div class="field">
-          <label class="field-label">調色邏輯/比例文字</label>
-          <textarea class="input" rows="2" data-field="recipeText" placeholder="例:白 4 + 紅 1 + 一點黃" maxlength="200">${escapeHtml(s.recipeText || '')}</textarea>
+          <label class="field-label">調色配方(可多個)</label>
+          <div class="step-recipes-list">${recipesHtml}</div>
+          <button type="button" class="btn btn-secondary step-add-recipe" data-act="add-recipe">+ 新增調色配方</button>
         </div>
 
         <div class="field">
@@ -293,6 +400,17 @@
           [_draft.steps[i], _draft.steps[i+1]] = [_draft.steps[i+1], _draft.steps[i]];
           renderStepsList();
         }
+      } else if (act === 'add-recipe') {
+        _draft.steps[i].recipes = _draft.steps[i].recipes || [];
+        _draft.steps[i].recipes.push({ recipeId: '', recipeText: '' });
+        renderStepsList();
+      } else if (act === 'del-recipe') {
+        const rItem = e.target.closest('.step-recipe-item');
+        if (rItem) {
+          const ri = +rItem.dataset.recipe;
+          _draft.steps[i].recipes.splice(ri, 1);
+          renderStepsList();
+        }
       }
       return;
     }
@@ -315,8 +433,14 @@
     const i = +card.dataset.step;
     const f = e.target.dataset.field;
     if (!f) return;
-    if (['title', 'recipeText', 'note'].includes(f)) {
+    if (f === 'title' || f === 'note') {
       _draft.steps[i][f] = e.target.value;
+    } else if (f === 'recipeText') {
+      const rItem = e.target.closest('.step-recipe-item');
+      if (rItem) {
+        const ri = +rItem.dataset.recipe;
+        _draft.steps[i].recipes[ri].recipeText = e.target.value;
+      }
     }
   }
 
@@ -327,7 +451,11 @@
     const i = +card.dataset.step;
     const f = e.target.dataset.field;
     if (f === 'recipeId') {
-      _draft.steps[i].recipeId = e.target.value;
+      const rItem = e.target.closest('.step-recipe-item');
+      if (rItem) {
+        const ri = +rItem.dataset.recipe;
+        _draft.steps[i].recipes[ri].recipeId = e.target.value;
+      }
     } else if (f === 'photo') {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
@@ -352,18 +480,26 @@
     }
     const dateVal = elDate.value ? new Date(elDate.value).getTime() : Date.now();
     const noteVal = (elNote.value || '').trim().slice(0, 500);
+    const planId = elPlanId ? (elPlanId.value || '') : '';
     const now = Date.now();
 
-    const stepsToSave = _draft.steps.map(s => ({
-      id: s.id,
-      title: (s.title || '').slice(0, 40),
-      recipeId: s.recipeId || '',
-      recipeText: (s.recipeText || '').slice(0, 200),
-      materialIds: Array.isArray(s.materialIds) ? s.materialIds.slice() : [],
-      note: (s.note || '').slice(0, 200),
-      photoBlob: s._photoBlob || null,
-      photoThumbBlob: s._photoThumbBlob || null,
-    }));
+    const stepsToSave = _draft.steps.map(s => {
+      const recs = (s.recipes || []).map(r => ({
+        recipeId: r.recipeId || '',
+        recipeText: (r.recipeText || '').slice(0, 200),
+      }));
+      return {
+        id: s.id,
+        title: (s.title || '').slice(0, 40),
+        recipes: recs,
+        recipeId: recs[0] ? recs[0].recipeId : '',
+        recipeText: recs[0] ? recs[0].recipeText : '',
+        materialIds: Array.isArray(s.materialIds) ? s.materialIds.slice() : [],
+        note: (s.note || '').slice(0, 200),
+        photoBlob: s._photoBlob || null,
+        photoThumbBlob: s._photoThumbBlob || null,
+      };
+    });
 
     try {
       if (_editingId) {
@@ -373,6 +509,7 @@
           ...old,
           title,
           date: dateVal,
+          planId,
           note: noteVal,
           steps: stepsToSave,
           coverBlob: _draft._coverBlob || old.coverBlob || null,
@@ -386,6 +523,7 @@
           id: MediaDB.genId(),
           title,
           date: dateVal,
+          planId,
           note: noteVal,
           steps: stepsToSave,
           coverBlob: _draft._coverBlob || null,
@@ -433,13 +571,37 @@
     const dateStr = it.date ? formatDate(it.date) : '';
     const stepsHtml = (it.steps || []).map((s, i) => detailStepHtml(s, i)).join('');
 
+    let planBlock = '';
+    if (it.planId) {
+      const p = _plans.find(x => x.id === it.planId);
+      if (p) {
+        planBlock = `<div class="lib-meta" style="font-size:12px;margin-bottom:8px;">📋 對應計劃:${escapeHtml(p.title || '(未命名)')}</div>`;
+      }
+    }
+
+    // 材料總結
+    const matIds = new Set();
+    (it.steps || []).forEach(s => (s.materialIds || []).forEach(mid => matIds.add(mid)));
+    let matsBlock = '';
+    if (matIds.size > 0) {
+      const tags = Array.from(matIds).map(mid => {
+        const m = _materials.find(x => x.id === mid);
+        return m ? `<span class="plan-d-mat-tag">${escapeHtml(m.name || '?')}</span>` : '';
+      }).filter(Boolean).join('');
+      if (tags) {
+        matsBlock = `<h4 class="work-detail-section">使用材料總覽</h4><div class="work-d-mats-summary">${tags}</div>`;
+      }
+    }
+
     elDetailBody.innerHTML = `
       <div class="work-detail-cover">${coverUrl ? `<img src="${coverUrl}" alt="">` : '<div class="lib-preview-empty">沒有封面照</div>'}</div>
       <h3 class="work-detail-title">${escapeHtml(it.title || '(未命名)')}</h3>
       <div class="work-detail-date">${escapeHtml(dateStr)}</div>
+      ${planBlock}
       ${it.note ? `<div class="work-detail-note">${escapeHtml(it.note)}</div>` : ''}
       <h4 class="work-detail-section">步驟</h4>
       ${stepsHtml || '<div class="hint" style="padding:8px 0;">沒有記錄步驟</div>'}
+      ${matsBlock}
     `;
     elDetailModal.hidden = false;
   }
@@ -447,21 +609,26 @@
   function detailStepHtml(s, i) {
     const photoBlob = s.photoBlob || s.photoThumbBlob;
     const photoUrl = photoBlob ? URL.createObjectURL(photoBlob) : '';
+    const recipes = getRecipes(s);
     let recipeBlock = '';
-    if (s.recipeId) {
-      const r = _recipes.find(x => x.id === s.recipeId);
-      if (r) {
-        const parts = (r.parts || []).map(p => `${escapeHtml(p.name)} ${p.parts}`).join(' + ');
-        recipeBlock = `
-          <div class="step-d-recipe">
-            <span class="step-d-swatch" style="background:${escapeAttr(r.targetHex || '#ccc')}"></span>
-            <span><b>${escapeHtml(r.name || r.targetHex)}</b>${parts ? ` — ${escapeHtml(parts)}` : ''}</span>
-          </div>
-        `;
-      }
-    }
-    if (s.recipeText) {
-      recipeBlock += `<div class="step-d-recipe-text">${escapeHtml(s.recipeText)}</div>`;
+    if (recipes.length) {
+      recipeBlock = recipes.map(r => {
+        let inner = '';
+        if (r.recipeId) {
+          const rc = _recipes.find(x => x.id === r.recipeId);
+          if (rc) {
+            const parts = (rc.parts || []).map(p => `${escapeHtml(p.name)} ${p.parts}`).join(' + ');
+            inner = `
+              <div class="step-d-recipe">
+                <span class="step-d-swatch" style="background:${escapeAttr(rc.targetHex || '#ccc')}"></span>
+                <span><b>${escapeHtml(rc.name || rc.targetHex)}</b>${parts ? ` — ${escapeHtml(parts)}` : ''}</span>
+              </div>
+            `;
+          }
+        }
+        if (r.recipeText) inner += `<div class="step-d-recipe-text">${escapeHtml(r.recipeText)}</div>`;
+        return inner;
+      }).join('');
     }
     let matsBlock = '';
     if (s.materialIds && s.materialIds.length) {
@@ -505,5 +672,9 @@
   }
   function escapeAttr(s) { return escapeHtml(s); }
 
-  window.Works = { init };
+  // 對外:給 calendar 用
+  function getAll() { return _items.slice(); }
+  function openDetail(id) { openDetailModal(id); }
+
+  window.Works = { init, getAll, openDetail };
 })();

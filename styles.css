@@ -37,10 +37,10 @@
   --surface:      #221C24;
   --surface-2:    #2B232E;
   --text:         #F2EAEC;
-  --text-2:       #B5A4AC;
-  --text-3:       #6E5F66;
-  --border:       #3A2E36;
-  --border-soft:  #2D2329;
+  --text-2:       #D4C0C8;   /* 提高對比 */
+  --text-3:       #9B8891;   /* 提高對比 */
+  --border:       #4A3D45;
+  --border-soft:  #382C33;
   --accent:       #E89BAA;
   --accent-soft:  #3A2730;
   --rose-gold:    #D9A98E;
@@ -62,10 +62,10 @@
     --surface:      #221C24;
     --surface-2:    #2B232E;
     --text:         #F2EAEC;
-    --text-2:       #B5A4AC;
-    --text-3:       #6E5F66;
-    --border:       #3A2E36;
-    --border-soft:  #2D2329;
+    --text-2:       #D4C0C8;
+    --text-3:       #9B8891;
+    --border:       #4A3D45;
+    --border-soft:  #382C33;
     --accent:       #E89BAA;
     --accent-soft:  #3A2730;
     --rose-gold:    #D9A98E;
@@ -583,11 +583,12 @@ canvas {
   transition: background 0.15s;
 }
 .tabs-btn.active {
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
+[data-theme="dark"] .tabs-btn.active { background: var(--surface-2); }
 .tab-pane[hidden] { display: none; }
 
 .sample-preview {
@@ -2449,3 +2450,345 @@ details > div p:last-child { margin-bottom: 0; }
   color: var(--text-2);
   font-size: 11px;
 }
+
+/* =============================================================================
+   v10 — 修正 / 新功能
+   ============================================================================= */
+
+/* 日期輸入框寬度修正(避免 iOS Safari/Chrome 撐開 modal) */
+input[type="date"], input[type="time"], input[type="datetime-local"], .input-date {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.input-date::-webkit-date-and-time-value {
+  text-align: left;
+  min-width: 0;
+}
+
+/* 兩欄並排(計劃日期 / 預計實行) */
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.row-2 .field { margin-bottom: 0; min-width: 0; }
+
+/* btn-icon-only:純 icon 鈕 */
+.btn-icon-only {
+  flex: 0 0 auto !important;
+  padding: 10px 12px;
+  width: auto;
+}
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:active { opacity: 0.85; }
+.btn svg { flex-shrink: 0; }
+
+/* lib-icon-btn:工具列上的純 icon 按鈕(日曆 / 篩選) */
+.lib-icon-btn {
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+
+/* 日期區間搜尋列 */
+.plans-date-toolbar { gap: 6px; }
+.plans-date-input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 8px;
+  font-size: 12px;
+}
+
+/* 計劃 3 區塊 */
+.plans-section { margin-bottom: 18px; }
+.plans-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.plans-section-head .plans-section-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.plans-section-head .plans-section-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--bg-2);
+  padding: 1px 8px;
+  border-radius: 999px;
+  margin-left: auto;
+}
+.plans-section-active   .plans-section-dot { background: var(--danger); animation: dotPulse 1.6s ease-in-out infinite; }
+.plans-section-pending  .plans-section-dot { background: var(--warning); }
+.plans-section-done     .plans-section-dot { background: var(--success); }
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(1.25); }
+}
+.plans-section-empty {
+  font-size: 12px;
+  color: var(--text-3);
+  padding: 10px 4px;
+}
+
+/* 計劃卡片 — 顯示日期 / 完成日期 */
+.lib-card .plan-when {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+/* 計劃詳細 — 在計時中時的 timer panel */
+.plan-d-timer {
+  margin: 4px 0 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, var(--accent-soft), var(--bg-2));
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  text-align: center;
+}
+.plan-d-timer-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.plan-d-timer-time {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+.plan-d-timer-time .cs {
+  font-size: 18px;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.plan-d-timer-state {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+.plan-d-timer-state.is-running { color: var(--danger); font-weight: 600; }
+.plan-d-timer-state.is-paused  { color: var(--warning); font-weight: 600; }
+
+/* 材料總結區塊 */
+.plan-d-mats-summary, .work-d-mats-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+.plan-d-mat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+[data-theme="dark"] .plan-d-mat-tag { color: var(--text); }
+
+/* 步驟內多個調色配方 */
+.step-recipes-list { display: flex; flex-direction: column; gap: 8px; }
+.step-recipe-item {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  position: relative;
+}
+.step-recipe-item .recipe-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.step-recipe-item .recipe-row-no {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--bg);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.step-recipe-item .recipe-row-del {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.step-recipe-item .recipe-row-del:active { background: var(--bg); }
+.step-add-recipe {
+  margin-top: 6px;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+/* step-icon-btn 刪除鈕加重對比 */
+.step-icon-btn.step-del {
+  background: var(--accent-soft);
+  color: var(--danger);
+}
+[data-theme="dark"] .step-icon-btn.step-del { background: rgba(233,107,124,0.18); }
+
+/* ===== 日曆 ===== */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cal-nav-btn { width: 36px; height: 36px; }
+.cal-month {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+.cal-legend {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.cal-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cal-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.cal-dot-plan { background: var(--accent); }
+.cal-dot-work { background: var(--success); }
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 11px;
+  color: var(--text-2);
+  text-align: center;
+  margin-bottom: 4px;
+  padding: 0 2px;
+}
+.cal-weekdays span { padding: 4px 0; }
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 0 2px;
+}
+.cal-day {
+  aspect-ratio: 1 / 1;
+  border: 1px solid transparent;
+  background: var(--bg-2);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-family: inherit;
+  padding: 0;
+  transition: background 0.12s, border-color 0.12s;
+}
+.cal-day.is-other { color: var(--text-3); background: transparent; }
+.cal-day.is-today { border-color: var(--link); font-weight: 700; }
+.cal-day.is-selected { background: var(--accent); color: #fff; }
+.cal-day:active { background: var(--bg); }
+.cal-day-dots {
+  display: flex;
+  gap: 3px;
+  margin-top: 2px;
+  height: 6px;
+}
+.cal-day-dots .cal-dot { width: 5px; height: 5px; }
+.cal-day.is-selected .cal-dot-plan { background: #fff; }
+.cal-day.is-selected .cal-dot-work { background: #fff; }
+.cal-day-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cal-day-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-2);
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  cursor: pointer;
+  font-size: 13px;
+}
+.cal-day-item:active { background: var(--bg); }
+.cal-day-item .cal-day-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.cal-day-item .cal-day-tag-plan { background: var(--accent-soft); color: var(--accent); }
+.cal-day-item .cal-day-tag-work { background: rgba(127,176,105,0.18); color: var(--success); }
+.cal-day-item-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-day-empty {
+  text-align: center;
+  color: var(--text-3);
+  font-size: 12px;
+  padding: 12px;
+}
+
+/* plan-detail-footer flex-wrap 以容納更多按鈕 */
+.plan-detail-footer { flex-wrap: wrap; }
+.plan-detail-footer .btn {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.plan-detail-footer .plan-detail-btn-edit,
+.plan-detail-footer .plan-detail-btn-del {
+  flex: 0 0 auto;
+}
+
+/* lib-toolbar 容納搜尋 + 日曆 + 新增 三個元素 */
+.lib-toolbar { flex-wrap: wrap; }
+.lib-toolbar > .saved-search { min-width: 0; }
