@@ -2455,7 +2455,8 @@ details > div p:last-child { margin-bottom: 0; }
    v10 — 修正 / 新功能
    ============================================================================= */
 
-/* 日期輸入框寬度修正(避免 iOS Safari/Chrome 撐開 modal) */
+/* 日期輸入框寬度修正(避免 iOS Safari/Chrome 撐開 modal,
+   iOS 顯示「2026年4月26日」會比一般「年/月/日」寬很多 */
 input[type="date"], input[type="time"], input[type="datetime-local"], .input-date {
   width: 100%;
   max-width: 100%;
@@ -2463,13 +2464,17 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
   box-sizing: border-box;
   -webkit-appearance: none;
   appearance: none;
+  font-size: 13px;
+  padding-left: 8px;
+  padding-right: 6px;
 }
 .input-date::-webkit-date-and-time-value {
   text-align: left;
   min-width: 0;
+  font-size: 13px;
 }
 
-/* 兩欄並排(計劃日期 / 預計實行) */
+/* 兩欄並排(計劃日期 / 預計實行) — 窄螢幕自動換成單欄避免 iOS 中文日期撐開 */
 .row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2477,6 +2482,9 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
   margin-bottom: 12px;
 }
 .row-2 .field { margin-bottom: 0; min-width: 0; }
+@media (max-width: 400px) {
+  .row-2 { grid-template-columns: 1fr; gap: 6px; }
+}
 
 /* btn-icon-only:純 icon 鈕 */
 .btn-icon-only {
@@ -2495,12 +2503,50 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
 }
 
 /* 日期區間搜尋列 */
-.plans-date-toolbar { gap: 6px; }
+.plans-date-toolbar { gap: 4px; flex-wrap: nowrap; }
 .plans-date-input {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
-  padding: 7px 8px;
-  font-size: 12px;
+  width: auto;
+  padding: 6px 4px;
+  font-size: 11px;
+}
+.plans-date-input::-webkit-date-and-time-value { font-size: 11px; padding: 0; }
+.plans-date-toolbar .hint { flex: 0 0 auto; font-size: 12px; }
+.plans-date-toolbar .btn-ghost { flex: 0 0 auto; padding: 4px 6px; font-size: 11px; }
+
+/* 深色模式 — 修正寫死 #fff 的卡片變成低對比 */
+[data-theme="dark"] .palette-card {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+  border-color: var(--border);
+}
+[data-theme="dark"] .palette-stack .swatch,
+[data-theme="dark"] .palette-stack .more { border-color: var(--surface-2); }
+[data-theme="dark"] .palette-stack .more { background: var(--bg-2); color: var(--text-2); }
+
+[data-theme="dark"] .tip-card {
+  background: linear-gradient(135deg, rgba(240,183,112,0.10) 0%, rgba(216,169,142,0.18) 100%);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .stale-banner {
+  background: rgba(240,183,112,0.10);
+  border-color: var(--border);
+  color: var(--warning);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .palette-card {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+    border-color: var(--border);
+  }
+  :root:not([data-theme]) .palette-stack .swatch,
+  :root:not([data-theme]) .palette-stack .more { border-color: var(--surface-2); }
+  :root:not([data-theme]) .palette-stack .more { background: var(--bg-2); color: var(--text-2); }
+  :root:not([data-theme]) .tip-card {
+    background: linear-gradient(135deg, rgba(240,183,112,0.10) 0%, rgba(216,169,142,0.18) 100%);
+    border-color: var(--border);
+  }
 }
 
 /* 計劃 3 區塊 */
