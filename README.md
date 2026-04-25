@@ -32,10 +32,43 @@
 
 三組分類(材料 / 色系 / 風格)都可自由新增、刪除,刪除時引用該分類的項目自動歸到「未分類」。
 
+### 計劃 ↔ 碼表整合
+- 任一計劃可標記為「實行中」(同時只能一個 active)
+- 開啟碼表計時 → 按下「停止」時,若計時 ≥ 30 秒且有實行中的計劃
+  → 自動跳出 confirm:「要把這次計時 X:XX 記錄到計劃「Y」嗎?」
+- 確認後寫入 `plan.timeRecords`,計劃詳細頁顯示「累計 N 次 / 總共 X 分鐘」
+
+### 色彩校正(Phase 9 MVP)
+
+解決同一張靈感圖在不同手機 / 不同光線下「拍到的色 ≠ 螢幕該有的色」的問題。
+
+**怎麼運作:**
+1. App 動態繪出一張**參考色卡**(白/灰/黑/紅/綠/藍 6 個已知 sRGB 色塊)
+2. 使用者列印或顯示在另一個螢幕上,**和凝膠一起拍進同一張照片**
+3. 上傳照片後,在 6 個對應色塊上各點一下,App 採樣得到「這支手機 + 這個光線拍出的 RGB」
+4. 用**線性最小二乘**對 6 組(measured RGB → target RGB)解出 **3×3 校正矩陣 + offset**
+
+   ```
+   [R']     [m₀₀ m₀₁ m₀₂]   [R]     [b₀]
+   [G']  =  [m₁₀ m₁₁ m₁₂] · [G]  +  [b₁]
+   [B']     [m₂₀ m₂₁ m₂₂]   [B]     [b₂]
+   ```
+5. 矩陣存進 `localStorage`,之後**所有圖片載入到取色 canvas 時自動套用**(調色頁、基底色採樣、靈感選圖通用)
+6. 預覽頁即時顯示「拍到 / 校正後 / 目標色 + ΔE」對比,可確認校正效果(一般 ΔE 從 8–10 → 1–3)
+
+**為什麼是 3×3 矩陣不是純白平衡:**
+白平衡只能處理「整體偏暖偏冷」(對角矩陣)。但相機色彩響應的偏差還包含「紅多了一點 = 也讓綠少了一點」這種**交叉項**,需要完整 3×3 線性映射,這是攝影業界 ColorChecker 24 色卡的標準做法。
+
+**MVP 限制:**
+- 需要使用者「**手動**點 6 個色塊位置」(完整版會自動偵測色卡 fiducial markers,但要 ~10MB 的 OpenCV.js,不值得)
+- 印刷色偏會被「相對校正」自動扣掉(因為比對的是「拍到 vs 印出來給螢幕看的目標」,所以印刷誤差兩邊都有)
+- 凝膠的鏡面反射 / 半透明 / 固化變深仍無法修正(物理問題,非顏色映射可解)
+
 ### 其他
 - **首頁 Home Hero**:時段問候 + 調色盤狀態 + 動作卡 + 最近收藏 rail + 小知識
 - 自訂基底色(最多 8 色,圖片採樣或 hex 輸入,可調染色力)
 - 碼表(count-up + 計次/lap,記每個塗布步驟花的時間)
+- **主題切換**:淺色 / 深色 / 自動(跟隨系統),同步影響 iOS 狀態列顏色
 
 ### 資料儲存
 - 基底色 / 配方 → `localStorage`(輕量 JSON)
@@ -81,19 +114,28 @@ ISO 787-24 量到的染色力:Carbon Black 約是 Bone Black 的 2–3 倍。同
 無框架、無 build、零外部依賴(只有 Mixbox.js 透過 CDN)。
 
 ```
-index.html        — 結構:views / modals / tabbar
-styles.css        — 樣式:Home Hero、圖庫網格、chip、modal、響應式
+.
+├── index.html         結構:4 個 view + sub-pane + 各功能 modal + tabbar
+├── styles.css         樣式:暖米 + 玫瑰金主題 / 淺暗 2 模式 / 響應式
+├── app.js             主邏輯:mixbox / CIEDE2000 / 搜尋 / 配方收藏 /
+│                      Home Hero / tabbar / 我的 view / 碼表 整合
+└── js/
+    # 系統 / 通用
+    ├── theme.js          淺色 / 深色 / 自動 主題切換
+    ├── calibration.js    色彩校正:6-patch 線性最小二乘 → 3×3 矩陣
+    ├── media-db.js       IndexedDB 薄封裝
+    │                     (materials / galleryImages / works / plans / categoryDefs)
+    ├── img-utils.js      圖片 resize + 縮圖,處理成 Blob
+    ├── cat-manager.js    共用「分類管理」modal(新增 / 刪除類別)
 
-app.js            — 主邏輯:mixbox / CIEDE2000 / 搜尋 / localStorage / Home Hero / tabbar
+    # 圖庫(視覺資料庫)
+    ├── materials.js      材料庫頁面(自訂分類)
+    ├── gallery.js        美甲靈感頁面(色系 + 風格 雙軸分類)
+    ├── inspire-picker.js 從靈感圖庫挑圖載入調色 canvas
 
-# IndexedDB 圖庫模組
-media-db.js       — IDB 薄封裝(materials / galleryImages / works / categoryDefs)
-img-utils.js      — 圖片 resize + 縮圖,處理成 Blob
-cat-manager.js    — 共用「分類管理」modal(新增 / 刪除類別)
-materials.js      — 材料庫頁面
-gallery.js        — 美甲靈感頁面
-works.js          — 作品紀錄頁面(含步驟編輯器)
-inspire-picker.js — 從靈感圖庫挑圖到調色 canvas
+    # 紀錄(我做過 / 要做)
+    ├── works.js          作品紀錄(封面 + 步驟編輯器)
+    └── plans.js          美甲計劃(多選靈感 + 步驟 + 碼表整合)
 ```
 
 進一步的架構說明、改動切入點、未完工事項見 **[HANDOFF.md](./HANDOFF.md)**。
@@ -116,9 +158,12 @@ python -m http.server 8080
 - [x] 圖庫:材料庫 + 美甲靈感(IndexedDB,雙軸分類)
 - [x] 作品紀錄:封面 + 步驟陣列(配方連結 / 材料多選 / 步驟照片)
 - [x] 從靈感圖庫直接載入調色 canvas
-- [ ] 校色卡(拍實體色卡反推螢幕偏差)
+- [x] 美甲計劃(預先規劃步驟、碼表整合記錄實作時間)
+- [x] 主題系統(淺/深/自動)+ 美感升級(暖米 + 玫瑰金)
+- [x] 校色卡 MVP(6-patch 線性最小二乘 → 3×3 矩陣)
+- [ ] 校色卡完整版(自動偵測色卡 fiducial markers,免手動點)
 - [ ] PWA 離線支援
-- [ ] 圖庫匯出 / 匯入備份
+- [ ] 圖庫匯出 / 匯入備份(.zip)
 - [ ] 從作品紀錄反查「這個材料用在哪幾次作品」
 
 ## Disclaimer
