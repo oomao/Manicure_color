@@ -710,6 +710,425 @@
     font-size: 12px;
     line-height: 1.5;
   }
+
+  /* ========== Phase 8: Multi-pick ========== */
+  .mode-toggle {
+    display: inline-flex;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+    margin-bottom: 8px;
+  }
+  .mode-toggle button {
+    background: transparent;
+    border: none;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s;
+  }
+  .mode-toggle button.active {
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .numbered-pin {
+    position: absolute;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(38,38,38,0.85);
+    color: #fff;
+    border: 2px solid #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 6px rgba(0,0,0,0.35);
+    z-index: 2;
+  }
+  .picks-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px;
+    background: var(--bg);
+    border-radius: 10px;
+    align-items: center;
+  }
+  .picks-strip .pick-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 4px 6px 4px 4px;
+    font-size: 12px;
+  }
+  .picks-strip .pick-chip .num {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(38,38,38,0.85);
+    color: #fff;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .picks-strip .pick-chip .sw {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .picks-strip .pick-chip .hex {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11px;
+    color: var(--text-2);
+  }
+  .picks-strip .pick-chip .x {
+    width: 16px; height: 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-3);
+    cursor: pointer;
+    padding: 0;
+  }
+  .picks-strip .pick-chip .x:active { color: var(--text); }
+  .picks-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+  }
+  .picks-actions .btn-mini {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    font-size: 11px;
+    padding: 4px 10px;
+    color: var(--text-2);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .picks-actions .btn-mini.on { background: var(--text); color: #fff; border-color: var(--text); }
+
+  .multi-card {
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 10px;
+    background: var(--surface);
+  }
+  .multi-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 10px;
+  }
+  .multi-card-head .num {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(38,38,38,0.85);
+    color: #fff;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .multi-card-head .num.midpoint { background: var(--link); }
+  .multi-card-head .swatches { display: flex; gap: 4px; }
+  .multi-card-head .sw {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .multi-card-head .hex-pair {
+    font-size: 11px;
+    color: var(--text-2);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .multi-card-head .acc {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-2);
+  }
+  .multi-card-head .acc .accuracy-de {
+    font-size: 12px; color: var(--text); font-weight: 700;
+  }
+  .multi-card .recipe-row { padding: 8px 4px; }
+  .multi-card .ratio-bar {
+    margin-top: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .multi-card-foot {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .multi-card-foot .btn { flex: 1; padding: 8px 12px; font-size: 13px; }
+  .multi-card-empty {
+    text-align: center;
+    color: var(--text-3);
+    font-size: 13px;
+    padding: 20px;
+  }
+
+  /* ========== Phase 10: Portion calculator ========== */
+  .portion-panel {
+    margin-top: 14px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: 10px;
+    border: 1px solid var(--border-soft);
+  }
+  .portion-panel summary {
+    padding: 4px 0;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .portion-modes {
+    display: flex;
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-soft);
+  }
+  .portion-modes button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-2);
+    padding: 7px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .portion-modes button.active {
+    background: var(--bg);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .portion-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .portion-row label {
+    color: var(--text-2);
+    font-size: 12px;
+    min-width: 64px;
+  }
+  .portion-row input, .portion-row select {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+  }
+  .portion-row input:focus, .portion-row select:focus { outline: none; border-color: var(--link); }
+  .portion-multiplier {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .portion-multiplier button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+  }
+  .portion-multiplier button.active {
+    background: var(--text);
+    color: #fff;
+    border-color: var(--text);
+  }
+  .portion-output {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border-soft);
+  }
+  .portion-output-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 4px 0;
+  }
+  .portion-output-row.total {
+    border-top: 1px solid var(--border-soft);
+    margin-top: 4px;
+    padding-top: 8px;
+    font-weight: 600;
+  }
+  .portion-output-row .name { color: var(--text); display: flex; align-items: center; gap: 6px; }
+  .portion-output-row .name .dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .portion-output-row .val {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--text);
+    font-size: 12px;
+  }
+  .portion-hint {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-2);
+    line-height: 1.5;
+  }
+
+  /* ========== Phase 10: UV timer ========== */
+  .timer-card {
+    margin-bottom: 12px;
+  }
+  .timer-card .timer-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .timer-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .timer-icon svg { width: 22px; height: 22px; }
+  .timer-info { flex: 1; }
+  .timer-info .title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .timer-info .sub { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+  .timer-modal .modal { max-width: 360px; }
+  .timer-display {
+    text-align: center;
+    padding: 8px 0 16px;
+  }
+  .timer-circle {
+    width: 200px; height: 200px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .timer-circle svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-circle .track {
+    fill: none;
+    stroke: var(--border-soft);
+    stroke-width: 8;
+  }
+  .timer-circle .progress {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s linear;
+  }
+  .timer-circle .num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .timer-circle .num .seconds {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .timer-circle .num .seconds-sub {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 6px;
+  }
+  .timer-presets {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 16px;
+  }
+  .timer-presets button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 4px;
+    cursor: pointer;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .timer-presets button.active {
+    background: var(--text);
+    color: #fff;
+    border-color: var(--text);
+  }
+  .timer-presets button .preset-time {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 2px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .timer-custom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .timer-custom label {
+    font-size: 12px;
+    color: var(--text-2);
+  }
+  .timer-custom input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    text-align: center;
+    color: var(--text);
+  }
+  .timer-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .timer-actions .btn { flex: 1; }
+  .btn-large { padding: 14px 16px; font-size: 15px; }
 </style>
 </head>
 <body>
@@ -724,11 +1143,26 @@
         選擇靈感圖片
       </label>
       <input type="file" id="fileInput" accept="image/*">
+
+      <div class="mode-toggle" id="modeToggle" style="margin-top: 12px;">
+        <button class="active" data-mode="single">單點取色</button>
+        <button data-mode="multi">多點取色</button>
+      </div>
+
       <div class="canvas-wrap" id="canvasWrap">
         <canvas id="canvas"></canvas>
         <div class="crosshair" id="crosshair"></div>
+        <div id="pinsLayer"></div>
       </div>
       <div class="hint" id="hint" style="display:none;">在圖片上點選想要的顏色</div>
+
+      <div class="picks-strip" id="picksStrip" hidden>
+        <div id="picksChips" style="display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0;"></div>
+        <div class="picks-actions">
+          <button class="btn-mini" id="gradientToggleBtn">+ 漸層中間色</button>
+          <button class="btn-mini" id="picksClearBtn">清除</button>
+        </div>
+      </div>
     </div>
 
     <div class="card" id="resultCard">
@@ -774,6 +1208,8 @@
           </button>
         </div>
 
+        <div class="portion-panel" id="mixPortionPanel"></div>
+
         <div class="note">
           <b>關於「份」的計量：</b>
           建議用 0.01 g 電子秤（1 份 = 0.10 g）；次選牙籤尖刮一團米粒大（直徑 ~3 mm）。
@@ -783,6 +1219,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Multi-pick results -->
+    <div id="multiResults" hidden></div>
   </section>
 
   <!-- ============ VIEW: 收藏 ============ -->
@@ -846,6 +1285,19 @@
   <!-- ============ VIEW: 我的 ============ -->
   <section class="view view-me" id="view-me" hidden>
     <div class="view-header"><h1>我的</h1></div>
+
+    <div class="card timer-card" id="timerCard" style="cursor: pointer;">
+      <div class="timer-row">
+        <div class="timer-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 1h6M5 4l-1 1M19 4l1 1"/></svg>
+        </div>
+        <div class="timer-info">
+          <div class="title">UV / LED 燈計時器</div>
+          <div class="sub">內建多種燈具預設，倒數結束會嗶嗶提示</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: var(--text-3);"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </div>
 
     <div class="card">
       <details open>
@@ -1044,6 +1496,46 @@
 </div>
 
 <input type="file" id="photoFileInput" accept="image/*" style="display: none;">
+
+<!-- ============ MODAL: UV Timer ============ -->
+<div class="modal-overlay timer-modal" id="timerModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">UV / LED 計時器</h2>
+      <button class="icon-btn" id="timerClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="timer-display">
+        <div class="timer-circle">
+          <svg viewBox="0 0 100 100">
+            <circle class="track" cx="50" cy="50" r="44"/>
+            <circle class="progress" id="timerProgress" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="0"/>
+          </svg>
+          <div class="num">
+            <div class="seconds" id="timerSeconds">60</div>
+            <div class="seconds-sub" id="timerLabel">秒</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="timer-presets" id="timerPresets">
+        <!-- presets injected by JS -->
+      </div>
+
+      <div class="timer-custom">
+        <label>自訂秒數</label>
+        <input type="number" id="timerCustom" min="5" max="300" step="1" placeholder="60">
+      </div>
+
+      <div class="timer-actions">
+        <button class="btn btn-secondary btn-large" id="timerReset">重設</button>
+        <button class="btn btn-primary btn-large" id="timerStartPause">開始</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 /* =========================================================================
@@ -2293,6 +2785,724 @@ function compressImage(file, maxDim, quality) {
     reader.readAsDataURL(file);
   });
 }
+
+/* =========================================================================
+   Phase 8：多點取色 / 漸層分析
+   ========================================================================= */
+
+const MAX_PICKS = 5;
+let mixMode = 'single';        // 'single' | 'multi'
+let multiPicks = [];           // [{ rgb, hex, x%, y%, recipe }]
+let showGradient = false;      // 顯示漸層中間色 toggle
+
+const modeToggle    = document.getElementById('modeToggle');
+const pinsLayer     = document.getElementById('pinsLayer');
+const picksStrip    = document.getElementById('picksStrip');
+const picksChips    = document.getElementById('picksChips');
+const picksClearBtn = document.getElementById('picksClearBtn');
+const gradientToggleBtn = document.getElementById('gradientToggleBtn');
+const multiResults  = document.getElementById('multiResults');
+
+modeToggle.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-mode]');
+  if (!btn) return;
+  setMixMode(btn.dataset.mode);
+});
+
+function setMixMode(mode) {
+  mixMode = mode;
+  modeToggle.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  if (mode === 'single') {
+    // 切回單點：清掉多點，但保留最近一個 pick 為單點目標
+    if (multiPicks.length > 0) {
+      const last = multiPicks[multiPicks.length - 1];
+      crosshair.style.left = last.xPct + '%';
+      crosshair.style.top  = last.yPct + '%';
+      crosshair.classList.add('show');
+      onPickTarget(last.rgb);
+    }
+    multiPicks = [];
+    renderPins();
+    renderPicksStrip();
+    renderMultiResults();
+  } else {
+    // 切到多點：清掉單點結果，把目前那點作為第一個多點
+    crosshair.classList.remove('show');
+    if (lastResult) {
+      multiPicks = [{
+        rgb: lastResult.target.slice(),
+        hex: lastResult.targetHex,
+        xPct: getCurrentCrosshairPct().x,
+        yPct: getCurrentCrosshairPct().y,
+      }];
+      // 把單點結果蓋掉
+      resultContent.hidden = true;
+      emptyState.hidden = false;
+      lastResult = null;
+    }
+    renderPins();
+    renderPicksStrip();
+    recomputeMultiResults();
+  }
+}
+
+function getCurrentCrosshairPct() {
+  return {
+    x: parseFloat(crosshair.style.left) || 50,
+    y: parseFloat(crosshair.style.top) || 50,
+  };
+}
+
+/* 改寫 canvas click：依 mixMode 分流 */
+function pickAndRoute(clientX, clientY) {
+  if (!currentImage) return;
+  const rect = canvas.getBoundingClientRect();
+  const xPct = (clientX - rect.left) / rect.width  * 100;
+  const yPct = (clientY - rect.top ) / rect.height * 100;
+
+  if (mixMode === 'single') {
+    const rgb = pickFromCanvas(canvas, ctx, crosshair, clientX, clientY);
+    if (rgb) onPickTarget(rgb);
+    return;
+  }
+
+  // 多點：取色但不動 crosshair
+  const tmp = { style: { left: '', top: '' }, classList: { add: () => {}, remove: () => {} } };
+  const rgb = pickFromCanvas(canvas, ctx, tmp, clientX, clientY);
+  if (!rgb) return;
+
+  if (multiPicks.length >= MAX_PICKS) {
+    toast(`最多 ${MAX_PICKS} 個取色點`);
+    return;
+  }
+  multiPicks.push({
+    rgb, hex: rgbToHex(rgb),
+    xPct, yPct,
+  });
+  renderPins();
+  renderPicksStrip();
+  recomputeMultiResults();
+}
+
+// 攔截原本的 click / touchend：在 capture 階段如果是 multi 模式就接管，
+// 用 stopImmediatePropagation 阻止原本 single-mode 監聽接著跑。
+canvas.addEventListener('click', (e) => {
+  if (mixMode !== 'multi') return;
+  e.stopImmediatePropagation();
+  pickAndRoute(e.clientX, e.clientY);
+}, true);
+canvas.addEventListener('touchend', (e) => {
+  if (mixMode !== 'multi' || e.changedTouches.length === 0) return;
+  e.stopImmediatePropagation();
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  pickAndRoute(t.clientX, t.clientY);
+}, true);
+
+function renderPins() {
+  pinsLayer.innerHTML = '';
+  if (mixMode !== 'multi') return;
+  multiPicks.forEach((p, i) => {
+    const pin = document.createElement('div');
+    pin.className = 'numbered-pin';
+    pin.style.left = p.xPct + '%';
+    pin.style.top  = p.yPct + '%';
+    pin.textContent = String(i + 1);
+    pinsLayer.appendChild(pin);
+  });
+}
+
+function renderPicksStrip() {
+  if (mixMode !== 'multi') {
+    picksStrip.hidden = true;
+    return;
+  }
+  picksStrip.hidden = false;
+  picksChips.innerHTML = '';
+  multiPicks.forEach((p, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'pick-chip';
+    chip.innerHTML = `
+      <div class="num">${i + 1}</div>
+      <div class="sw" style="background:${p.hex}"></div>
+      <div class="hex">${p.hex}</div>
+      <button class="x" data-idx="${i}" aria-label="移除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    `;
+    picksChips.appendChild(chip);
+  });
+  gradientToggleBtn.classList.toggle('on', showGradient);
+  gradientToggleBtn.disabled = multiPicks.length < 2;
+  gradientToggleBtn.style.opacity = (multiPicks.length < 2) ? 0.4 : 1;
+}
+
+picksChips.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-idx]');
+  if (!btn) return;
+  const idx = parseInt(btn.dataset.idx, 10);
+  multiPicks.splice(idx, 1);
+  renderPins();
+  renderPicksStrip();
+  recomputeMultiResults();
+});
+
+picksClearBtn.addEventListener('click', () => {
+  if (multiPicks.length === 0) return;
+  multiPicks = [];
+  renderPins();
+  renderPicksStrip();
+  renderMultiResults();
+});
+
+gradientToggleBtn.addEventListener('click', () => {
+  if (multiPicks.length < 2) return;
+  showGradient = !showGradient;
+  renderPicksStrip();
+  recomputeMultiResults();
+});
+
+/* LAB 中間色：在 ab 空間插值，回 RGB */
+function labToRgb(lab) {
+  const [L, a, b] = lab;
+  const fy = (L + 16) / 116;
+  const fx = a / 500 + fy;
+  const fz = fy - b / 200;
+  const cube = (t) => Math.pow(t, 3) > 0.008856 ? Math.pow(t, 3) : (t - 16/116) / 7.787;
+  let X = cube(fx) * 0.95047;
+  let Y = cube(fy) * 1.00000;
+  let Z = cube(fz) * 1.08883;
+  let r = X *  3.2404542 + Y * -1.5371385 + Z * -0.4985314;
+  let g = X * -0.9692660 + Y *  1.8760108 + Z *  0.0415560;
+  let bl= X *  0.0556434 + Y * -0.2040259 + Z *  1.0572252;
+  const enc = (c) => c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1/2.4) - 0.055;
+  r = Math.round(Math.max(0, Math.min(1, enc(r))) * 255);
+  g = Math.round(Math.max(0, Math.min(1, enc(g))) * 255);
+  bl= Math.round(Math.max(0, Math.min(1, enc(bl))) * 255);
+  return [r, g, bl];
+}
+
+function midpointRgb(rgbA, rgbB) {
+  const labA = rgbToLab(rgbA);
+  const labB = rgbToLab(rgbB);
+  return labToRgb([
+    (labA[0] + labB[0]) / 2,
+    (labA[1] + labB[1]) / 2,
+    (labA[2] + labB[2]) / 2,
+  ]);
+}
+
+function buildMultiResultEntries() {
+  const entries = [];
+  multiPicks.forEach((p, i) => {
+    entries.push({ kind: 'pick', label: String(i + 1), rgb: p.rgb, hex: p.hex });
+    if (showGradient && i < multiPicks.length - 1) {
+      const mid = midpointRgb(p.rgb, multiPicks[i+1].rgb);
+      entries.push({
+        kind: 'mid',
+        label: `${i+1}↔${i+2}`,
+        rgb: mid,
+        hex: rgbToHex(mid),
+      });
+    }
+  });
+  return entries;
+}
+
+function recomputeMultiResults() {
+  const entries = buildMultiResultEntries();
+  // 預先算好每筆的 recipe
+  entries.forEach(en => {
+    const best = findBestRecipe(en.rgb);
+    if (!best) {
+      en.recipe = null;
+      return;
+    }
+    const mixed = best.mixed.map(v => Math.max(0, Math.min(255, Math.round(v))));
+    en.recipe = {
+      target: en.rgb.slice(),
+      targetHex: en.hex,
+      predicted: mixed,
+      predictedHex: rgbToHex(mixed),
+      deltaE: best.deltaE,
+      parts: BASES
+        .map((b, i) => ({ hex: b.hex, name: b.name, sub: b.sub || '', parts: best.parts[i] }))
+        .filter(p => p.parts > 0),
+      totalParts: best.total,
+    };
+  });
+  renderMultiResults(entries);
+}
+
+function renderMultiResults(entries) {
+  if (mixMode !== 'multi') {
+    multiResults.hidden = true;
+    multiResults.innerHTML = '';
+    return;
+  }
+  if (!entries) entries = buildMultiResultEntries();
+  if (entries.length === 0) {
+    multiResults.hidden = false;
+    multiResults.innerHTML = `<div class="card"><div class="multi-card-empty">在圖片上點選 1-${MAX_PICKS} 個位置</div></div>`;
+    return;
+  }
+  multiResults.hidden = false;
+  multiResults.innerHTML = '';
+  entries.forEach((en, i) => {
+    const card = document.createElement('div');
+    card.className = 'multi-card';
+    card.dataset.idx = String(i);
+    if (!en.recipe) {
+      card.innerHTML = `<div class="multi-card-empty">沒有基底色可用，請先到「基底色」分頁新增</div>`;
+      multiResults.appendChild(card);
+      return;
+    }
+    const r = en.recipe;
+    const dE = r.deltaE;
+    let level, color;
+    if (dE < 2)       { level = '幾乎無差'; color = '#2ECC71'; }
+    else if (dE < 5)  { level = '非常接近';  color = '#27AE60'; }
+    else if (dE < 10) { level = '接近';      color = '#F1C40F'; }
+    else if (dE < 20) { level = '中等';      color = '#F39C12'; }
+    else              { level = '差距較大';  color = '#E74C3C'; }
+    const ratio = r.parts.map(p => p.parts).join(' : ');
+    const namesShort = r.parts.map(p => p.name).join(':');
+    const recipeRows = r.parts.map(p => `
+      <div class="recipe-row">
+        <div class="color-dot" style="background:${p.hex}"></div>
+        <div class="recipe-info">
+          <div class="name">${escapeHtml(p.name)}</div>
+          ${p.sub ? `<div class="sub">${escapeHtml(p.sub)}</div>` : ''}
+        </div>
+        <div class="recipe-parts">${p.parts}<span class="unit">份</span></div>
+      </div>
+    `).join('');
+    card.innerHTML = `
+      <div class="multi-card-head">
+        <div class="num ${en.kind === 'mid' ? 'midpoint' : ''}">${escapeHtml(en.label)}</div>
+        <div class="swatches">
+          <div class="sw" style="background:${r.targetHex}"></div>
+          <div class="sw" style="background:${r.predictedHex}"></div>
+        </div>
+        <div class="hex-pair">${r.targetHex} → ${r.predictedHex}</div>
+        <div class="acc">
+          <span class="accuracy-dot" style="background:${color}"></span>
+          <span class="accuracy-de">ΔE ${dE.toFixed(1)}</span> · ${level}
+        </div>
+      </div>
+      <div>${recipeRows}</div>
+      <div class="ratio-bar">比例 ${ratio}（${escapeHtml(namesShort)}）</div>
+      <div class="multi-card-foot">
+        <button class="btn btn-secondary" data-act="copy">複製</button>
+        <button class="btn btn-primary" data-act="save">收藏</button>
+      </div>
+    `;
+    multiResults.appendChild(card);
+  });
+}
+
+multiResults.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const card = btn.closest('.multi-card');
+  if (!card) return;
+  const idx = parseInt(card.dataset.idx, 10);
+  const entries = buildMultiResultEntries();
+  const en = entries[idx];
+  if (!en || !en.recipe) return;
+  if (btn.dataset.act === 'copy') {
+    const ok = await copyToClipboard(recipeToText({
+      name: `位置 ${en.label}`,
+      targetHex: en.recipe.targetHex,
+      predictedHex: en.recipe.predictedHex,
+      deltaE: en.recipe.deltaE,
+      parts: en.recipe.parts,
+      totalParts: en.recipe.totalParts,
+      tags: [],
+      note: '',
+    }));
+    toast(ok ? '已複製到剪貼簿' : '複製失敗');
+  } else if (btn.dataset.act === 'save') {
+    if (SAVED.length >= MAX_SAVED) {
+      alert(`收藏已達上限 ${MAX_SAVED} 個`);
+      return;
+    }
+    // 直接打開 saveModal，但暫時把 lastResult 換成這筆
+    lastResult = {
+      target: en.recipe.target.slice(),
+      targetHex: en.recipe.targetHex,
+      predicted: en.recipe.predicted.slice(),
+      predictedHex: en.recipe.predictedHex,
+      deltaE: en.recipe.deltaE,
+      parts: en.recipe.parts.map(p => ({ ...p })),
+      totalParts: en.recipe.totalParts,
+    };
+    openSaveModal();
+    saveNameInput.value = `位置 ${en.label}（${en.recipe.targetHex}）`;
+    setTimeout(() => { saveNameInput.focus(); saveNameInput.select(); }, 80);
+  }
+});
+
+/* =========================================================================
+   Phase 10：份量計算（克數 / 倍數）
+   ========================================================================= */
+
+const GEL_PER_PART = 0.10; // 1 份 = 0.10 g（與既有提示一致）
+const NAIL_SIZE_GRAMS = { small: 0.04, medium: 0.06, large: 0.08 };
+
+function renderPortionPanel(container, recipe) {
+  // recipe = { parts: [{hex,name,sub,parts}], totalParts }
+  if (!recipe || !recipe.parts || recipe.parts.length === 0) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = '';
+  // state lives on the container
+  if (!container._portionState) {
+    container._portionState = {
+      mode: 'mult',     // 'mult' | 'nail'
+      multiplier: 1,
+      nails: 10,
+      size: 'medium',
+    };
+  }
+  const s = container._portionState;
+  container.innerHTML = `
+    <details>
+      <summary>📐 份量計算（克數 / 倍數）</summary>
+      <div style="padding-top: 10px;">
+        <div class="portion-modes">
+          <button data-mode="mult" class="${s.mode === 'mult' ? 'active' : ''}">倍數縮放</button>
+          <button data-mode="nail" class="${s.mode === 'nail' ? 'active' : ''}">依指甲數</button>
+        </div>
+        <div class="portion-body" id="portionBody"></div>
+      </div>
+    </details>
+  `;
+  const body = container.querySelector('#portionBody');
+  renderPortionBody();
+
+  container.querySelectorAll('.portion-modes button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      s.mode = btn.dataset.mode;
+      container.querySelectorAll('.portion-modes button').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === s.mode);
+      });
+      renderPortionBody();
+    });
+  });
+
+  function renderPortionBody() {
+    if (s.mode === 'mult') {
+      body.innerHTML = `
+        <div class="portion-multiplier" id="multBtns">
+          ${[0.5, 1, 1.5, 2, 3].map(m =>
+            `<button data-m="${m}" class="${s.multiplier === m ? 'active' : ''}">×${m}</button>`
+          ).join('')}
+          <button data-m="custom" class="${![0.5,1,1.5,2,3].includes(s.multiplier) ? 'active' : ''}">自訂</button>
+        </div>
+        <div class="portion-row" id="multCustomRow" style="${[0.5,1,1.5,2,3].includes(s.multiplier) ? 'display:none' : ''}">
+          <label>倍數</label>
+          <input type="number" id="multCustomInput" min="0.1" max="10" step="0.1" value="${s.multiplier}">
+        </div>
+        <div id="portionOutput"></div>
+        <div class="portion-hint">1 份 = ${GEL_PER_PART.toFixed(2)} g（用 0.01 g 電子秤量；10 顆鈕扣電池疊起來約 50 g 可校準）</div>
+      `;
+      body.querySelectorAll('#multBtns button').forEach(b => {
+        b.addEventListener('click', () => {
+          if (b.dataset.m === 'custom') {
+            s.multiplier = 1.2;
+          } else {
+            s.multiplier = parseFloat(b.dataset.m);
+          }
+          renderPortionBody();
+        });
+      });
+      const customInput = body.querySelector('#multCustomInput');
+      if (customInput) {
+        customInput.addEventListener('input', () => {
+          const v = parseFloat(customInput.value);
+          if (isFinite(v) && v > 0) {
+            s.multiplier = v;
+            renderOutput();
+          }
+        });
+      }
+      renderOutput();
+    } else {
+      body.innerHTML = `
+        <div class="portion-row">
+          <label>指甲數</label>
+          <input type="number" id="nailCount" min="1" max="20" step="1" value="${s.nails}">
+        </div>
+        <div class="portion-row">
+          <label>每片用量</label>
+          <select id="nailSize">
+            <option value="small" ${s.size==='small'?'selected':''}>小（薄塗 ${NAIL_SIZE_GRAMS.small}g/片）</option>
+            <option value="medium" ${s.size==='medium'?'selected':''}>中（標準 ${NAIL_SIZE_GRAMS.medium}g/片）</option>
+            <option value="large" ${s.size==='large'?'selected':''}>大（厚塗 ${NAIL_SIZE_GRAMS.large}g/片）</option>
+          </select>
+        </div>
+        <div id="portionOutput"></div>
+        <div class="portion-hint">提示：色膠用量不算底膠 / 封層；會自動加 20% 緩衝避免不夠用。</div>
+      `;
+      body.querySelector('#nailCount').addEventListener('input', (e) => {
+        const v = parseInt(e.target.value, 10);
+        if (isFinite(v) && v > 0) { s.nails = v; renderOutput(); }
+      });
+      body.querySelector('#nailSize').addEventListener('change', (e) => {
+        s.size = e.target.value; renderOutput();
+      });
+      renderOutput();
+    }
+  }
+
+  function renderOutput() {
+    const out = body.querySelector('#portionOutput');
+    if (!out) return;
+    let scale;
+    if (s.mode === 'mult') {
+      scale = s.multiplier;
+    } else {
+      const targetGrams = s.nails * NAIL_SIZE_GRAMS[s.size] * 1.2; // 加 20% 緩衝
+      const currentGrams = recipe.totalParts * GEL_PER_PART;
+      scale = currentGrams > 0 ? targetGrams / currentGrams : 0;
+    }
+    let totalGrams = 0;
+    let totalParts = 0;
+    const rows = recipe.parts.map(p => {
+      const scaled = p.parts * scale;
+      const grams = scaled * GEL_PER_PART;
+      totalParts += scaled;
+      totalGrams += grams;
+      return `
+        <div class="portion-output-row">
+          <span class="name"><span class="dot" style="background:${p.hex}"></span>${escapeHtml(p.name)}</span>
+          <span class="val">${scaled.toFixed(2)} 份 · ${grams.toFixed(3)} g</span>
+        </div>
+      `;
+    }).join('');
+    out.innerHTML = `
+      <div class="portion-output">
+        ${rows}
+        <div class="portion-output-row total">
+          <span class="name">總計</span>
+          <span class="val">${totalParts.toFixed(2)} 份 · ${totalGrams.toFixed(3)} g</span>
+        </div>
+      </div>
+    `;
+  }
+}
+
+/* 把 portion panel 接到「調色」結果 */
+const mixPortionPanel = document.getElementById('mixPortionPanel');
+
+// 修補 showResult：每次顯示結果就重渲染 portion panel
+const _origShowResult = showResult;
+showResult = function(target) {
+  _origShowResult(target);
+  if (lastResult) {
+    renderPortionPanel(mixPortionPanel, {
+      parts: lastResult.parts,
+      totalParts: lastResult.totalParts,
+    });
+  } else {
+    mixPortionPanel.innerHTML = '';
+  }
+};
+
+/* 把 portion panel 接到「收藏詳細頁」 */
+const _origRenderDetail = renderDetail;
+renderDetail = function(r) {
+  _origRenderDetail(r);
+  // 在 detailBody 最後追加一個 portion section
+  const sec = document.createElement('div');
+  sec.className = 'detail-section';
+  sec.innerHTML = `<div class="label">份量計算</div><div id="detailPortion"></div>`;
+  detailBody.appendChild(sec);
+  renderPortionPanel(sec.querySelector('#detailPortion'), {
+    parts: r.parts,
+    totalParts: r.totalParts,
+  });
+};
+
+/* =========================================================================
+   Phase 10：UV / LED 計時器
+   ========================================================================= */
+
+const TIMER_PRESETS = [
+  { id: 'led-base',   label: 'LED 底膠',   sec: 30 },
+  { id: 'led-color',  label: 'LED 色膠',   sec: 60 },
+  { id: 'led-top',    label: 'LED 封層',   sec: 30 },
+  { id: 'uv-base',    label: 'UV 底膠',    sec: 60 },
+  { id: 'uv-color',   label: 'UV 色膠',    sec: 90 },
+  { id: 'uv-top',     label: 'UV 封層',    sec: 60 },
+];
+
+const timerCard       = document.getElementById('timerCard');
+const timerModal      = document.getElementById('timerModal');
+const timerClose      = document.getElementById('timerClose');
+const timerSecondsEl  = document.getElementById('timerSeconds');
+const timerLabelEl    = document.getElementById('timerLabel');
+const timerProgress   = document.getElementById('timerProgress');
+const timerPresetsEl  = document.getElementById('timerPresets');
+const timerCustom     = document.getElementById('timerCustom');
+const timerStartPause = document.getElementById('timerStartPause');
+const timerReset      = document.getElementById('timerReset');
+
+const TIMER_DASH_TOTAL = 2 * Math.PI * 44; // 276.46
+let timerTotal = 60;
+let timerRemaining = 60;
+let timerInterval = null;
+let timerEndTime = 0;
+let timerActivePreset = null;
+
+function renderTimerPresets() {
+  timerPresetsEl.innerHTML = TIMER_PRESETS.map(p => `
+    <button data-id="${p.id}" data-sec="${p.sec}" class="${timerActivePreset === p.id ? 'active' : ''}">
+      ${p.label}
+      <span class="preset-time">${p.sec}s</span>
+    </button>
+  `).join('');
+  timerPresetsEl.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => {
+      const sec = parseInt(b.dataset.sec, 10);
+      setTimerSeconds(sec);
+      timerActivePreset = b.dataset.id;
+      renderTimerPresets();
+      timerCustom.value = '';
+    });
+  });
+}
+
+function setTimerSeconds(sec) {
+  stopTimer(false);
+  timerTotal = Math.max(1, Math.round(sec));
+  timerRemaining = timerTotal;
+  updateTimerUI();
+}
+
+function updateTimerUI() {
+  timerSecondsEl.textContent = String(Math.ceil(timerRemaining));
+  const pct = timerRemaining / timerTotal;
+  timerProgress.style.strokeDashoffset = String(TIMER_DASH_TOTAL * (1 - pct));
+  if (timerInterval) {
+    timerStartPause.textContent = '暫停';
+    timerLabelEl.textContent = '進行中';
+  } else if (timerRemaining <= 0) {
+    timerStartPause.textContent = '重新開始';
+    timerLabelEl.textContent = '完成';
+  } else if (timerRemaining < timerTotal) {
+    timerStartPause.textContent = '繼續';
+    timerLabelEl.textContent = '已暫停';
+  } else {
+    timerStartPause.textContent = '開始';
+    timerLabelEl.textContent = '秒';
+  }
+}
+
+function startTimer() {
+  if (timerRemaining <= 0) {
+    timerRemaining = timerTotal;
+  }
+  timerEndTime = Date.now() + timerRemaining * 1000;
+  timerInterval = setInterval(tickTimer, 100);
+  updateTimerUI();
+}
+function tickTimer() {
+  const left = (timerEndTime - Date.now()) / 1000;
+  if (left <= 0) {
+    timerRemaining = 0;
+    stopTimer(true);
+    finishTimer();
+  } else {
+    timerRemaining = left;
+    updateTimerUI();
+  }
+}
+function stopTimer(keepRemaining) {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  if (!keepRemaining) {
+    // nothing
+  }
+  updateTimerUI();
+}
+function resetTimer() {
+  stopTimer(false);
+  timerRemaining = timerTotal;
+  updateTimerUI();
+}
+function finishTimer() {
+  beep();
+  if (navigator.vibrate) {
+    try { navigator.vibrate([200, 100, 200, 100, 200]); } catch (_) {}
+  }
+  toast('計時完成');
+}
+
+let _audioCtx = null;
+function beep() {
+  try {
+    _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _audioCtx;
+    const now = ctx.currentTime;
+    [0, 0.3, 0.6].forEach(offset => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0, now + offset);
+      gain.gain.linearRampToValueAtTime(0.4, now + offset + 0.02);
+      gain.gain.linearRampToValueAtTime(0, now + offset + 0.18);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.2);
+    });
+  } catch (_) {}
+}
+
+timerCard.addEventListener('click', () => {
+  timerModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  if (!timerActivePreset && !timerCustom.value) {
+    setTimerSeconds(60);
+  }
+});
+timerClose.addEventListener('click', () => {
+  timerModal.hidden = true;
+  document.body.style.overflow = '';
+});
+timerModal.addEventListener('click', (e) => {
+  if (e.target === timerModal) {
+    timerModal.hidden = true;
+    document.body.style.overflow = '';
+  }
+});
+timerStartPause.addEventListener('click', () => {
+  if (timerInterval) {
+    stopTimer(true);
+  } else {
+    if (timerRemaining <= 0) timerRemaining = timerTotal;
+    startTimer();
+  }
+});
+timerReset.addEventListener('click', resetTimer);
+timerCustom.addEventListener('input', () => {
+  const v = parseInt(timerCustom.value, 10);
+  if (isFinite(v) && v > 0) {
+    setTimerSeconds(v);
+    timerActivePreset = null;
+    renderTimerPresets();
+  }
+});
+
+renderTimerPresets();
 
 /* ========== Init ========== */
 BASES = loadBases();
