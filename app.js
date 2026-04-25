@@ -266,6 +266,8 @@ fileInput.addEventListener('change', (e) => {
       canvasWrap.classList.add('has-image');
       hint.style.display = 'block';
       crosshair.classList.remove('show');
+      if (typeof resetZoom === 'function') resetZoom();
+      if (zoomControls) zoomControls.hidden = false;
     };
     img.src = ev.target.result;
   };
@@ -301,18 +303,8 @@ function pickFromCanvas(cvs, c, ch, clientX, clientY) {
   return [Math.round(r/n), Math.round(g/n), Math.round(b/n)];
 }
 
-canvas.addEventListener('click', (e) => {
-  const rgb = pickFromCanvas(canvas, ctx, crosshair, e.clientX, e.clientY);
-  if (rgb) onPickTarget(rgb);
-});
-canvas.addEventListener('touchend', (e) => {
-  if (e.changedTouches.length > 0) {
-    const t = e.changedTouches[0];
-    const rgb = pickFromCanvas(canvas, ctx, crosshair, t.clientX, t.clientY);
-    if (rgb) onPickTarget(rgb);
-    e.preventDefault();
-  }
-}, { passive: false });
+// 取色入口：tap 才算（pan/scroll/pinch 不會誤觸發）。
+// 實際的 listeners 在後面 pan/zoom 那段一次處理。
 
 function onPickTarget(target) {
   emptyState.hidden = true;
@@ -504,7 +496,10 @@ let modalImage = null;
 let pendingHex = null;
 
 window.addEventListener('resize', () => {
-  if (currentImage) drawImage(currentImage, canvas, ctx, canvasWrap);
+  if (currentImage) {
+    drawImage(currentImage, canvas, ctx, canvasWrap);
+    if (typeof resetZoom === 'function') resetZoom(); // 旋轉 / resize 後重置 zoom
+  }
   if (modalImage)  drawImage(modalImage, modalCanvas, modalCtx, modalCanvasWrap);
 });
 
@@ -1353,20 +1348,215 @@ function pickAndRoute(clientX, clientY) {
   recomputeMultiResults();
 }
 
-// 攔截原本的 click / touchend：在 capture 階段如果是 multi 模式就接管，
-// 用 stopImmediatePropagation 阻止原本 single-mode 監聽接著跑。
-canvas.addEventListener('click', (e) => {
-  if (mixMode !== 'multi') return;
-  e.stopImmediatePropagation();
+/* =========================================================================
+   Pan / Zoom + Tap-vs-drag 偵測
+   - zoom = 1：touch-action: pan-y，瀏覽器接管上下捲，整頁可滑
+   - zoom > 1：自己接管，1 指 = pan，2 指 = pinch
+   - tap：移動 < 8px 且時間 < 400ms 才視為取色，避免多點誤觸 / 滑動誤點
+   ========================================================================= */
+
+const canvasZoomer  = document.getElementById('canvasZoomer');
+const zoomControls  = document.getElementById('zoomControls');
+const zoomInBtn     = document.getElementById('zoomInBtn');
+const zoomOutBtn    = document.getElementById('zoomOutBtn');
+const zoomResetBtn  = document.getElementById('zoomResetBtn');
+const zoomLevelEl   = document.getElementById('zoomLevel');
+
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 6;
+const ZOOM_STEP = 1.5;
+const TAP_MOVE_THRESHOLD = 8;   // px — 累積移動超過就不算 tap
+const TAP_TIME_THRESHOLD = 400; // ms — 按住超過就不算 tap（避免長按誤觸）
+
+let zoom = 1;
+let panX = 0, panY = 0;
+
+function applyZoomTransform() {
+  canvasZoomer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  canvasWrap.classList.toggle('is-zoomed', zoom > 1.001);
+  if (zoomLevelEl) zoomLevelEl.textContent = zoom.toFixed(1) + '×';
+  if (zoomOutBtn)  zoomOutBtn.disabled  = zoom <= ZOOM_MIN + 0.001;
+  if (zoomInBtn)   zoomInBtn.disabled   = zoom >= ZOOM_MAX - 0.001;
+  if (zoomResetBtn) zoomResetBtn.style.visibility = zoom > 1.001 ? 'visible' : 'hidden';
+}
+
+function clampPan() {
+  if (zoom <= 1) { panX = 0; panY = 0; return; }
+  const W = canvasWrap.clientWidth  || 1;
+  const H = canvasWrap.clientHeight || 1;
+  const minX = W - W * zoom;  // 負值
+  const minY = H - H * zoom;
+  panX = Math.min(0, Math.max(minX, panX));
+  panY = Math.min(0, Math.max(minY, panY));
+}
+
+function setZoom(newZoom, pivotClientX, pivotClientY) {
+  newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+  if (Math.abs(newZoom - zoom) < 0.001) return;
+  // 把 pivot 轉成 wrap 的本地座標（zoom=1 那層）
+  const rect = canvasWrap.getBoundingClientRect();
+  const localX = (pivotClientX - rect.left - panX) / zoom;
+  const localY = (pivotClientY - rect.top  - panY) / zoom;
+  zoom = newZoom;
+  panX = (pivotClientX - rect.left) - localX * zoom;
+  panY = (pivotClientY - rect.top ) - localY * zoom;
+  clampPan();
+  applyZoomTransform();
+}
+
+function resetZoom() {
+  zoom = 1; panX = 0; panY = 0;
+  applyZoomTransform();
+}
+
+zoomInBtn  && zoomInBtn .addEventListener('click', () => {
+  const r = canvasWrap.getBoundingClientRect();
+  setZoom(zoom * ZOOM_STEP, r.left + r.width/2, r.top + r.height/2);
+});
+zoomOutBtn && zoomOutBtn.addEventListener('click', () => {
+  const r = canvasWrap.getBoundingClientRect();
+  setZoom(zoom / ZOOM_STEP, r.left + r.width/2, r.top + r.height/2);
+});
+zoomResetBtn && zoomResetBtn.addEventListener('click', resetZoom);
+
+/* ---------- Touch handling: tap / pan / pinch ---------- */
+
+let activeTouches = new Map(); // identifier → { x0, y0, x, y, t0 }
+let isPinching = false;
+let pinchStartDist = 0;
+let pinchStartZoom = 1;
+let pinchPivot = { x: 0, y: 0 };
+let isDragging = false; // 1 指拖曳中（zoom>1 時 pan）
+let didMove = false;    // 整段觸控是否被判定為「拖過 / 縮過」（用來阻止 click 觸發）
+let _handledTouchTap = false; // touchend 已處理 tap，後續合成 click 要忽略
+
+function _touchDist(t1, t2) {
+  const dx = t1.clientX - t2.clientX;
+  const dy = t1.clientY - t2.clientY;
+  return Math.hypot(dx, dy);
+}
+
+canvasWrap.addEventListener('touchstart', (e) => {
+  if (!currentImage) return;
+  // 點到 zoom 控制鈕時不處理（讓按鈕自己接 click）
+  if (e.target.closest('.zoom-controls')) return;
+  for (const t of e.changedTouches) {
+    activeTouches.set(t.identifier, {
+      x0: t.clientX, y0: t.clientY,
+      x:  t.clientX, y:  t.clientY,
+      t0: Date.now(),
+    });
+  }
+  if (e.touches.length === 2) {
+    // 進入 pinch
+    isPinching = true;
+    isDragging = false;
+    didMove = true;
+    const [a, b] = [e.touches[0], e.touches[1]];
+    pinchStartDist = _touchDist(a, b);
+    pinchStartZoom = zoom;
+    pinchPivot = { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+    e.preventDefault();
+  } else if (e.touches.length === 1 && zoom > 1.001) {
+    // zoom > 1 時 1 指準備 pan
+    isDragging = true;
+  }
+}, { passive: false });
+
+canvasWrap.addEventListener('touchmove', (e) => {
+  if (!currentImage) return;
+
+  if (isPinching && e.touches.length >= 2) {
+    const [a, b] = [e.touches[0], e.touches[1]];
+    const d = _touchDist(a, b);
+    if (pinchStartDist > 0) {
+      const factor = d / pinchStartDist;
+      const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchStartZoom * factor));
+      setZoom(newZoom, pinchPivot.x, pinchPivot.y);
+    }
+    e.preventDefault();
+    return;
+  }
+
+  if (e.touches.length === 1) {
+    const t = e.touches[0];
+    const rec = activeTouches.get(t.identifier);
+    if (!rec) return;
+    const dx = t.clientX - rec.x;
+    const dy = t.clientY - rec.y;
+    const totalDx = t.clientX - rec.x0;
+    const totalDy = t.clientY - rec.y0;
+    if (Math.hypot(totalDx, totalDy) > TAP_MOVE_THRESHOLD) didMove = true;
+    rec.x = t.clientX; rec.y = t.clientY;
+
+    if (isDragging && zoom > 1.001) {
+      panX += dx;
+      panY += dy;
+      clampPan();
+      applyZoomTransform();
+      e.preventDefault();
+    }
+    // 否則（zoom=1）不 preventDefault，讓瀏覽器處理頁面捲動
+  }
+}, { passive: false });
+
+canvasWrap.addEventListener('touchend', (e) => {
+  if (!currentImage) {
+    activeTouches.clear();
+    return;
+  }
+  if (e.target.closest('.zoom-controls')) return;
+
+  // 取色：只處理「最後一根手指離開、整段沒被判定為移動、按壓時間夠短」
+  if (e.touches.length === 0 && !didMove && !isPinching) {
+    const t = e.changedTouches[0];
+    const rec = t ? activeTouches.get(t.identifier) : null;
+    if (rec && (Date.now() - rec.t0) < TAP_TIME_THRESHOLD) {
+      e.preventDefault();
+      _handledTouchTap = true;
+      // 下一輪事件循環清掉，避免後續手動觸發的 click 也被吃掉
+      setTimeout(() => { _handledTouchTap = false; }, 350);
+      pickAndRoute(t.clientX, t.clientY);
+    }
+  }
+
+  // 清掉已離開的 touch
+  for (const t of e.changedTouches) activeTouches.delete(t.identifier);
+
+  if (e.touches.length < 2) isPinching = false;
+  if (e.touches.length === 0) {
+    isDragging = false;
+    // 重置 didMove 要等 click 也處理完，所以延遲一拍
+    setTimeout(() => { didMove = false; }, 0);
+  }
+}, { passive: false });
+
+canvasWrap.addEventListener('touchcancel', () => {
+  activeTouches.clear();
+  isPinching = false;
+  isDragging = false;
+  didMove = false;
+}, { passive: false });
+
+/* ---------- Mouse / Desktop：click 取色 + wheel zoom ---------- */
+// 用 click 而不是 touchstart→touchend，因為桌機 mouse 的 touchend 我們不會收到，
+// 但行動端 click 預設不會觸發（已經 preventDefault 過 touchend），所以兩條路不會重疊。
+canvasWrap.addEventListener('click', (e) => {
+  if (!currentImage) return;
+  if (didMove || _handledTouchTap) return; // touchend 已經吃掉這次 tap
+  // 點到 zoom-controls 區域時不取色
+  if (e.target.closest('.zoom-controls')) return;
   pickAndRoute(e.clientX, e.clientY);
-}, true);
-canvas.addEventListener('touchend', (e) => {
-  if (mixMode !== 'multi' || e.changedTouches.length === 0) return;
-  e.stopImmediatePropagation();
+});
+
+canvasWrap.addEventListener('wheel', (e) => {
+  if (!currentImage) return;
+  // ctrl + 滾輪 = 縮放（不擋一般滾頁）
+  if (!e.ctrlKey && !e.metaKey) return;
   e.preventDefault();
-  const t = e.changedTouches[0];
-  pickAndRoute(t.clientX, t.clientY);
-}, true);
+  const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
+  setZoom(zoom * factor, e.clientX, e.clientY);
+}, { passive: false });
 
 function renderPins() {
   pinsLayer.innerHTML = '';
@@ -1797,179 +1987,185 @@ renderDetail = function(r) {
 };
 
 /* =============================================================================
-   Phase 10：UV / LED 計時器
+   碼表（取代原本的 UV/LED 倒數計時器）
+   - 行為比照 iPhone 內建碼表：開始 → 計次 → 停止 → 重設 → 開始
+   - 狀態機：'idle' | 'running' | 'paused'
+   - 計次（lap）：記下從上一次 lap（或起點）到現在的 delta，以及累積總時間
    ============================================================================= */
 
-const TIMER_PRESETS = [
-  { id: 'led-base',   label: 'LED 底膠',   sec: 30 },
-  { id: 'led-color',  label: 'LED 色膠',   sec: 60 },
-  { id: 'led-top',    label: 'LED 封層',   sec: 30 },
-  { id: 'uv-base',    label: 'UV 底膠',    sec: 60 },
-  { id: 'uv-color',   label: 'UV 色膠',    sec: 90 },
-  { id: 'uv-top',     label: 'UV 封層',    sec: 60 },
-];
+const timerCard   = document.getElementById('timerCard');
+const timerModal  = document.getElementById('timerModal');
+const timerClose  = document.getElementById('timerClose');
+const swTimeEl    = document.getElementById('swTime');
+const swStatusEl  = document.getElementById('swStatus');
+const swLapsEl    = document.getElementById('swLaps');
+const swPrimary   = document.getElementById('swPrimary');
+const swSecondary = document.getElementById('swSecondary');
 
-const timerCard       = document.getElementById('timerCard');
-const timerModal      = document.getElementById('timerModal');
-const timerClose      = document.getElementById('timerClose');
-const timerSecondsEl  = document.getElementById('timerSeconds');
-const timerLabelEl    = document.getElementById('timerLabel');
-const timerProgress   = document.getElementById('timerProgress');
-const timerPresetsEl  = document.getElementById('timerPresets');
-const timerCustom     = document.getElementById('timerCustom');
-const timerStartPause = document.getElementById('timerStartPause');
-const timerReset      = document.getElementById('timerReset');
+let swState = 'idle';     // 'idle' | 'running' | 'paused'
+let swStartedAt = 0;      // running 期間：開始時間（含累積 paused 偏移調整）
+let swElapsed = 0;        // 暫停時凍結的 elapsed（ms）
+let swRafId = null;
+let swLaps = [];          // [{ t: totalMs, delta: ms }]
 
-const TIMER_DASH_TOTAL = 2 * Math.PI * 44; // 276.46
-let timerTotal = 60;
-let timerRemaining = 60;
-let timerInterval = null;
-let timerEndTime = 0;
-let timerActivePreset = null;
+function fmtTime(ms) {
+  const total = Math.max(0, Math.floor(ms));
+  const cs = Math.floor((total % 1000) / 10);
+  const s  = Math.floor(total / 1000) % 60;
+  const m  = Math.floor(total / 60000);
+  return {
+    main: `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`,
+    cs:   `.${String(cs).padStart(2, '0')}`,
+  };
+}
 
-function renderTimerPresets() {
-  timerPresetsEl.innerHTML = TIMER_PRESETS.map(p => `
-    <button data-id="${p.id}" data-sec="${p.sec}" class="${timerActivePreset === p.id ? 'active' : ''}">
-      ${p.label}
-      <span class="preset-time">${p.sec}s</span>
-    </button>
-  `).join('');
-  timerPresetsEl.querySelectorAll('button').forEach(b => {
-    b.addEventListener('click', () => {
-      const sec = parseInt(b.dataset.sec, 10);
-      setTimerSeconds(sec);
-      timerActivePreset = b.dataset.id;
-      renderTimerPresets();
-      timerCustom.value = '';
+function getSwElapsed() {
+  if (swState === 'running') return swElapsed + (Date.now() - swStartedAt);
+  return swElapsed;
+}
+
+function renderSwTime() {
+  const f = fmtTime(getSwElapsed());
+  swTimeEl.innerHTML = `${f.main}<span class="cs">${f.cs}</span>`;
+}
+
+function renderSwButtons() {
+  if (swState === 'idle') {
+    swPrimary.textContent = '開始';
+    swPrimary.classList.add('btn-primary');
+    swPrimary.classList.remove('btn-secondary');
+    swSecondary.textContent = '重設';
+    swSecondary.disabled = true;
+    swStatusEl.textContent = '就緒';
+  } else if (swState === 'running') {
+    swPrimary.textContent = '停止';
+    swPrimary.classList.remove('btn-primary');
+    swPrimary.classList.add('btn-secondary');
+    swSecondary.textContent = '計次';
+    swSecondary.disabled = false;
+    swStatusEl.textContent = '進行中';
+  } else { // paused
+    swPrimary.textContent = '繼續';
+    swPrimary.classList.add('btn-primary');
+    swPrimary.classList.remove('btn-secondary');
+    swSecondary.textContent = '重設';
+    swSecondary.disabled = false;
+    swStatusEl.textContent = '已停止';
+  }
+}
+
+function renderSwLaps() {
+  if (swLaps.length === 0) {
+    swLapsEl.hidden = true;
+    swLapsEl.innerHTML = '';
+    return;
+  }
+  swLapsEl.hidden = false;
+  // 找最快 / 最慢（≥3 lap 才標）
+  let fastestIdx = -1, slowestIdx = -1;
+  if (swLaps.length >= 3) {
+    let fastest = Infinity, slowest = 0;
+    swLaps.forEach((lap, i) => {
+      if (lap.delta < fastest) { fastest = lap.delta; fastestIdx = i; }
+      if (lap.delta > slowest) { slowest = lap.delta; slowestIdx = i; }
     });
-  });
+  }
+  // newest 在最上面
+  const rows = swLaps.map((lap, i) => {
+    const fd = fmtTime(lap.delta);
+    const ft = fmtTime(lap.t);
+    let cls = 'lap';
+    if (i === fastestIdx) cls += ' fastest';
+    if (i === slowestIdx) cls += ' slowest';
+    return `<div class="${cls}">
+      <span class="num">#${i + 1}</span>
+      <span class="delta">${fd.main}${fd.cs}</span>
+      <span class="total">${ft.main}${ft.cs}</span>
+    </div>`;
+  }).reverse().join('');
+  swLapsEl.innerHTML = rows;
 }
 
-function setTimerSeconds(sec) {
-  stopTimer(false);
-  timerTotal = Math.max(1, Math.round(sec));
-  timerRemaining = timerTotal;
-  updateTimerUI();
+function swTick() {
+  renderSwTime();
+  swRafId = requestAnimationFrame(swTick);
 }
 
-function updateTimerUI() {
-  timerSecondsEl.textContent = String(Math.ceil(timerRemaining));
-  const pct = timerRemaining / timerTotal;
-  timerProgress.style.strokeDashoffset = String(TIMER_DASH_TOTAL * (1 - pct));
-  if (timerInterval) {
-    timerStartPause.textContent = '暫停';
-    timerLabelEl.textContent = '進行中';
-  } else if (timerRemaining <= 0) {
-    timerStartPause.textContent = '重新開始';
-    timerLabelEl.textContent = '完成';
-  } else if (timerRemaining < timerTotal) {
-    timerStartPause.textContent = '繼續';
-    timerLabelEl.textContent = '已暫停';
-  } else {
-    timerStartPause.textContent = '開始';
-    timerLabelEl.textContent = '秒';
-  }
+function swStart() {
+  if (swState === 'running') return;
+  swStartedAt = Date.now();
+  swState = 'running';
+  if (swRafId == null) swRafId = requestAnimationFrame(swTick);
+  renderSwButtons();
 }
 
-function startTimer() {
-  if (timerRemaining <= 0) {
-    timerRemaining = timerTotal;
+function swStop() {
+  if (swState !== 'running') return;
+  swElapsed += Date.now() - swStartedAt;
+  swState = 'paused';
+  if (swRafId != null) {
+    cancelAnimationFrame(swRafId);
+    swRafId = null;
   }
-  timerEndTime = Date.now() + timerRemaining * 1000;
-  timerInterval = setInterval(tickTimer, 100);
-  updateTimerUI();
-}
-function tickTimer() {
-  const left = (timerEndTime - Date.now()) / 1000;
-  if (left <= 0) {
-    timerRemaining = 0;
-    stopTimer(true);
-    finishTimer();
-  } else {
-    timerRemaining = left;
-    updateTimerUI();
-  }
-}
-function stopTimer(keepRemaining) {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-  if (!keepRemaining) {
-    // nothing
-  }
-  updateTimerUI();
-}
-function resetTimer() {
-  stopTimer(false);
-  timerRemaining = timerTotal;
-  updateTimerUI();
-}
-function finishTimer() {
-  beep();
-  if (navigator.vibrate) {
-    try { navigator.vibrate([200, 100, 200, 100, 200]); } catch (_) {}
-  }
-  toast('計時完成');
+  renderSwTime();
+  renderSwButtons();
 }
 
-let _audioCtx = null;
-function beep() {
-  try {
-    _audioCtx = _audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = _audioCtx;
-    const now = ctx.currentTime;
-    [0, 0.3, 0.6].forEach(offset => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0, now + offset);
-      gain.gain.linearRampToValueAtTime(0.4, now + offset + 0.02);
-      gain.gain.linearRampToValueAtTime(0, now + offset + 0.18);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(now + offset);
-      osc.stop(now + offset + 0.2);
-    });
-  } catch (_) {}
+function swReset() {
+  if (swRafId != null) {
+    cancelAnimationFrame(swRafId);
+    swRafId = null;
+  }
+  swState = 'idle';
+  swElapsed = 0;
+  swStartedAt = 0;
+  swLaps = [];
+  renderSwTime();
+  renderSwButtons();
+  renderSwLaps();
 }
+
+function swLap() {
+  if (swState !== 'running') return;
+  const t = getSwElapsed();
+  const prev = swLaps.length > 0 ? swLaps[swLaps.length - 1].t : 0;
+  swLaps.push({ t, delta: t - prev });
+  renderSwLaps();
+}
+
+swPrimary.addEventListener('click', () => {
+  if (swState === 'running') swStop();
+  else swStart();
+});
+swSecondary.addEventListener('click', () => {
+  if (swState === 'running') swLap();
+  else swReset();
+});
 
 timerCard.addEventListener('click', () => {
   timerModal.hidden = false;
   document.body.style.overflow = 'hidden';
-  if (!timerActivePreset && !timerCustom.value) {
-    setTimerSeconds(60);
+  renderSwTime();
+  renderSwButtons();
+  renderSwLaps();
+  // 進入 modal 時若是 running，重新接上 raf 迴圈（之前可能 close 時被取消）
+  if (swState === 'running' && swRafId == null) {
+    swRafId = requestAnimationFrame(swTick);
   }
 });
-timerClose.addEventListener('click', () => {
+function closeTimerModal() {
   timerModal.hidden = true;
   document.body.style.overflow = '';
-});
+  // running 狀態下 raf 繼續跑也沒事；保留繼續計時
+}
+timerClose.addEventListener('click', closeTimerModal);
 timerModal.addEventListener('click', (e) => {
-  if (e.target === timerModal) {
-    timerModal.hidden = true;
-    document.body.style.overflow = '';
-  }
-});
-timerStartPause.addEventListener('click', () => {
-  if (timerInterval) {
-    stopTimer(true);
-  } else {
-    if (timerRemaining <= 0) timerRemaining = timerTotal;
-    startTimer();
-  }
-});
-timerReset.addEventListener('click', resetTimer);
-timerCustom.addEventListener('input', () => {
-  const v = parseInt(timerCustom.value, 10);
-  if (isFinite(v) && v > 0) {
-    setTimerSeconds(v);
-    timerActivePreset = null;
-    renderTimerPresets();
-  }
+  if (e.target === timerModal) closeTimerModal();
 });
 
-renderTimerPresets();
+// 初始化顯示
+renderSwTime();
+renderSwButtons();
 
 /* =============================================================================
    Home Hero — 首頁問候 / 調色盤狀態 / 雙動作卡 / 最近收藏 rail / 小知識

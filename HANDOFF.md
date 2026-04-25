@@ -32,7 +32,7 @@ Chienze/
 1. `view-mix` — 調色（首頁）。**Home Hero** 在最上方，picker 收在 `#pickerSection`（hidden）。
 2. `view-saved` — 收藏列表 + 搜尋。
 3. `view-bases` — 基底色管理（最多 8 色）。
-4. `view-me` — 我的（UV/LED 計時器入口）。
+4. `view-me` — 我的（碼表入口、APP 說明）。
 
 view 切換靠 `switchView(name)`，會：
 - 更新 view 的 hidden 狀態
@@ -43,7 +43,7 @@ view 切換靠 `switchView(name)`，會：
 - `#baseModal` — 新增 / 編輯基底色（圖片採樣 + hex 輸入兩 tab）
 - `#saveModal` — 儲存配方
 - `#detailModal` — 配方詳情（再做一次 / 刪除）
-- `#timerModal` — UV/LED 計時器
+- `#timerModal` — 碼表（count-up + lap；id 沿用舊名 `timerModal`）
 - `#hexModal` — 從 Home Hero 進入的 hex 直接輸入
 
 打開 / 關閉統一用 `el.hidden = true|false`，沒有用 class toggle。
@@ -128,7 +128,22 @@ Base 也可有 `swatchPhoto`（採樣時的縮圖）。
 | 新的 view（第 5 個 tab） | 加 `<section class="view view-X" id="view-X">`、tabbar 加按鈕、`views` 物件加 key、`switchView` 自動處理 |
 | 新的演算法路徑 | 從 `onPickTarget` 接，不要繞過它 — 它有處理 calc state / scroll / 多點 |
 | 新的小知識 | `app.js` 的 `const TIPS = [...]`，直接加字串 |
-| 新的計時器預設 | `renderTimerPresets()` 上面的 `TIMER_PRESETS` 陣列 |
+| 碼表行為改動 | `app.js` 的「碼表」區塊：`swState` 狀態機 + `renderSwTime/Buttons/Laps` |
+
+## 7.5. 圖片取色 pan/zoom（2026/04 改）
+
+問題：原本 `canvas { touch-action: none }`，圖片擋住整頁滑動；多點模式容易誤觸；不能放大。
+
+現在的設計：
+- `.canvas-wrap { touch-action: pan-y }` 預設讓瀏覽器接管上下捲。
+- zoom > 1 時加 class `is-zoomed`，切成 `touch-action: none` 自己接管 1 指 pan。
+- Tap 偵測：累積移動 > `TAP_MOVE_THRESHOLD`（8px）或時間 > `TAP_TIME_THRESHOLD`（400ms）就不算 tap，不會取色。
+- Pinch：2 指 distance ratio 套到 zoom，pivot 在兩指中點。
+- 內部結構：`<div.canvas-wrap><div.canvas-zoomer><canvas/><crosshair/><pinsLayer/></div><zoom-controls/></div>`，CSS transform 套在 zoomer 上、`transform-origin: 0 0`。
+- 取色座標：`pickFromCanvas` 用 `getBoundingClientRect()` 拿到的是後變換的 rect，所以 zoom 過後仍能正確取像素，不需額外換算。
+- crosshair / pin 的 % 定位放在 zoomer 內部（pre-transform 空間），會跟著 transform 一起縮放、不需要額外重畫。
+
+切記：**tap 偵測 + 取色都在 `canvasWrap` 上，不是 canvas 上**。原本綁在 canvas 的 `click` / `touchend` listener 已經移除。
 
 ## 8. 已知限制 / 陷阱
 
