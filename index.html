@@ -1129,6 +1129,127 @@
   }
   .timer-actions .btn { flex: 1; }
   .btn-large { padding: 14px 16px; font-size: 15px; }
+
+  /* ========================================================================
+     Responsive
+     - 通用防呆：避免長字串撐爆 flex 容器
+     - max-width: 380px：iPhone SE/mini、窄 Android
+     - max-height: 600px landscape：橫螢幕手機
+     - min-width: 768px：平板 / 桌機
+     ======================================================================== */
+
+  /* 通用：flex 子元素含文字時允許縮 + 長字串可斷行 */
+  .pick-chip,
+  .timer-info,
+  .multi-card-head .hex-pair { min-width: 0; }
+  .compare-cell .hex,
+  .saved-card .meta,
+  .multi-card-head .hex-pair { overflow-wrap: anywhere; }
+  .recipe-info .sub,
+  .detail-section .body-text { overflow-wrap: anywhere; word-break: break-word; }
+
+  /* multi-card-head：在窄螢幕讓 ΔE 自動換到第二行 */
+  .multi-card-head { flex-wrap: wrap; row-gap: 6px; }
+  .multi-card-head .acc {
+    margin-left: 0;
+    width: 100%;
+    text-align: right;
+  }
+  @media (min-width: 420px) {
+    .multi-card-head .acc {
+      margin-left: auto;
+      width: auto;
+      text-align: left;
+    }
+  }
+
+  /* 平板 / 桌機（≥ 768px） */
+  @media (min-width: 768px) {
+    main { max-width: 720px; }
+    .modal { max-width: 480px; }
+    .view { padding: 16px 20px 32px; }
+    .card { padding: 20px; }
+    .compare-cell .swatch { height: 112px; }
+    .saved-card { padding: 14px; }
+    .saved-card .swatch-pair { width: 48px; height: 64px; }
+  }
+
+  /* 大桌機（≥ 1024px）— 加寬一點點，但不無限變寬 */
+  @media (min-width: 1024px) {
+    main { max-width: 760px; }
+  }
+
+  /* 小手機（≤ 380px）— iPhone SE 1st gen / mini / 老 Android */
+  @media (max-width: 380px) {
+    .view { padding: 10px 12px 20px; }
+    .card { padding: 14px; margin-bottom: 10px; }
+    .view-header { padding: 6px 0 10px; min-height: 40px; }
+    .view-header h1 { font-size: 18px; }
+
+    .compare-cell .label { padding: 8px 10px 4px; font-size: 10px; }
+    .compare-cell .swatch { height: 72px; margin: 0 10px; }
+    .compare-cell .hex { padding: 6px 10px 10px; font-size: 11px; }
+
+    .recipe-row { padding: 10px 2px; gap: 10px; }
+    .color-dot { width: 22px; height: 22px; }
+    .recipe-info .name { font-size: 13px; }
+    .recipe-parts { font-size: 16px; }
+    .ratio-bar { padding: 8px 10px; font-size: 12px; }
+
+    .btn { padding: 9px 14px; font-size: 13px; }
+    .detail-actions-row { gap: 6px; }
+    .detail-actions-row .btn,
+    .multi-card-foot .btn { padding: 8px 10px; font-size: 12px; }
+
+    .mode-toggle button { padding: 6px 10px; font-size: 12px; }
+
+    .picks-strip { padding: 8px; gap: 6px; }
+    .pick-chip { padding: 3px 5px 3px 3px; font-size: 11px; }
+    .pick-chip .num,
+    .pick-chip .sw { width: 16px; height: 16px; font-size: 9px; }
+    .picks-actions .btn-mini { padding: 4px 8px; font-size: 10px; }
+
+    .multi-card { padding: 10px; }
+    .multi-card-head { gap: 8px; padding-bottom: 8px; margin-bottom: 8px; }
+    .multi-card-head .num { width: 22px; height: 22px; font-size: 11px; }
+    .multi-card-head .swatches .sw { width: 22px; height: 22px; }
+    .multi-card-head .hex-pair { font-size: 10px; }
+
+    .saved-card { padding: 10px; gap: 10px; }
+    .saved-card .swatch-pair { width: 32px; height: 48px; }
+    .saved-card .photo-thumb { width: 48px; height: 48px; }
+    .saved-card .meta { gap: 6px; font-size: 11px; }
+
+    .base-item { padding: 10px; gap: 10px; }
+    .base-swatch { width: 36px; height: 36px; }
+    .icon-btn { width: 32px; height: 32px; }
+
+    .modal { border-radius: 14px; }
+    .modal-body { padding: 14px; }
+    .modal-header { padding: 12px 14px; }
+    .modal-footer { padding: 10px 14px; }
+
+    .timer-circle { width: 168px; height: 168px; }
+    .timer-circle .num .seconds { font-size: 40px; }
+    .timer-presets { grid-template-columns: repeat(2, 1fr); }
+
+    .portion-panel { padding: 10px; }
+    .portion-output-row { font-size: 12px; }
+    .portion-row label { min-width: 56px; font-size: 11px; }
+
+    .tabbar-btn { font-size: 9px; }
+    .tabbar-btn svg { width: 22px; height: 22px; }
+  }
+
+  /* 橫螢幕手機 — modal 不要超出螢幕、計時器縮小 */
+  @media (max-height: 600px) and (orientation: landscape) {
+    .modal { max-height: calc(100vh - 16px); }
+    .modal-body { padding: 12px 16px; }
+    .timer-circle { width: 140px; height: 140px; }
+    .timer-circle .num .seconds { font-size: 36px; }
+    .timer-display { padding: 4px 0 8px; }
+    .compare-cell .swatch { height: 72px; }
+  }
 </style>
 </head>
 <body>
