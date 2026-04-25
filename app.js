@@ -245,31 +245,28 @@ async function initLibraryOnce() {
     const paneMat   = document.getElementById('lib-pane-materials');
     const paneGal   = document.getElementById('lib-pane-gallery');
     const paneWorks = document.getElementById('lib-pane-works');
-    const matAdd   = document.getElementById('matAddBtn');
-    const galAdd   = document.getElementById('galAddBtn');
-    const worksAdd = document.getElementById('worksAddBtn');
+    const panePlans = document.getElementById('lib-pane-plans');
     const libTitle = document.getElementById('libTitle');
-    const titles = { materials: '材料庫', gallery: '美甲靈感', works: '作品紀錄' };
+    const titles = { materials: '材料庫', gallery: '美甲靈感', works: '作品紀錄', plans: '美甲計劃' };
     function showSub(name) {
       segBtns.forEach(b => b.classList.toggle('active', b.dataset.libtab === name));
       paneMat.hidden   = name !== 'materials';
       paneGal.hidden   = name !== 'gallery';
       paneWorks.hidden = name !== 'works';
-      matAdd.hidden    = name !== 'materials';
-      galAdd.hidden    = name !== 'gallery';
-      worksAdd.hidden  = name !== 'works';
+      panePlans.hidden = name !== 'plans';
       libTitle.textContent = titles[name] || '圖庫';
     }
     segBtns.forEach(b => b.addEventListener('click', () => showSub(b.dataset.libtab)));
     showSub('materials');
     _libraryInited = true;
 
-    // DB + 三個子頁初始化(一次)
+    // DB + 四個子頁初始化(一次)
     try {
       await MediaDB.init();
       await Materials.init();
       await Gallery.init();
       await Works.init();
+      await Plans.init();
     } catch (err) {
       console.warn('Library init failed', err);
       const grid = document.getElementById('matGrid');
@@ -2153,6 +2150,32 @@ function swStop() {
   }
   renderSwTime();
   renderSwButtons();
+  // 若有實行中的計劃且至少跑了 30 秒,詢問是否記錄
+  maybeOfferRecordTime();
+}
+
+async function maybeOfferRecordTime() {
+  if (!window.Plans || typeof Plans.getActive !== 'function') return;
+  const elapsed = swElapsed;
+  if (elapsed < 30 * 1000) return; // < 30 秒不問
+  let active = null;
+  try { active = await Plans.getActive(); } catch (_) {}
+  if (!active) return;
+  const mins = Math.floor(elapsed / 60000);
+  const secs = Math.floor((elapsed % 60000) / 1000);
+  const timeStr = `${mins}:${String(secs).padStart(2, '0')}`;
+  // 用 setTimeout 避免 confirm 跟剛剛的 click 事件競態
+  setTimeout(async () => {
+    const ok = confirm(`要把這次計時 ${timeStr} 記錄到計劃「${active.title}」嗎?`);
+    if (ok) {
+      try {
+        await Plans.recordTime(active.id, elapsed, swLaps.length);
+        if (swStatusEl) swStatusEl.textContent = '已記錄';
+      } catch (err) {
+        alert('記錄失敗:' + (err.message || err));
+      }
+    }
+  }, 100);
 }
 
 function swReset() {

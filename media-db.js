@@ -6,12 +6,13 @@
    ============================================================================= */
 (function () {
   const DB_NAME = 'nail-mixer-media';
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
 
   const STORE_MAT = 'materials';
   const STORE_GAL = 'galleryImages';
   const STORE_DEF = 'categoryDefs';
   const STORE_WORK = 'works';
+  const STORE_PLAN = 'plans';
 
   let _db = null;
 
@@ -40,6 +41,10 @@
         }
         if (!db.objectStoreNames.contains(STORE_WORK)) {
           const s = db.createObjectStore(STORE_WORK, { keyPath: 'id' });
+          s.createIndex('by-updatedAt', 'updatedAt', { unique: false });
+        }
+        if (!db.objectStoreNames.contains(STORE_PLAN)) {
+          const s = db.createObjectStore(STORE_PLAN, { keyPath: 'id' });
           s.createIndex('by-updatedAt', 'updatedAt', { unique: false });
         }
       };
@@ -138,7 +143,7 @@
 
   window.MediaDB = {
     init,
-    STORE_MAT, STORE_GAL, STORE_DEF, STORE_WORK,
+    STORE_MAT, STORE_GAL, STORE_DEF, STORE_WORK, STORE_PLAN,
     add, put, get, del, getAll, count,
     getCategoryDef, setCategoryDef,
     storageEstimate,

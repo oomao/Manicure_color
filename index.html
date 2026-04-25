@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#FAFAFA">
 <title>美甲調色</title>
 <script src="https://scrtwpns.com/mixbox.js"></script>
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
 <main>
@@ -225,35 +225,26 @@
   <section class="view view-library" id="view-library" hidden>
     <div class="view-header">
       <h1 id="libTitle">圖庫</h1>
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-ghost" id="matAddBtn" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
-          新增材料
-        </button>
-        <button class="btn btn-ghost" id="galAddBtn" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
-          新增靈感
-        </button>
-        <button class="btn btn-ghost" id="worksAddBtn" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
-          新增作品
-        </button>
-      </div>
     </div>
 
     <div class="tabs lib-segmented">
       <button class="tabs-btn active" data-libtab="materials">材料</button>
       <button class="tabs-btn" data-libtab="gallery">靈感</button>
       <button class="tabs-btn" data-libtab="works">作品</button>
+      <button class="tabs-btn" data-libtab="plans">計劃</button>
     </div>
 
     <!-- Sub-pane: 材料 -->
     <div class="lib-pane" id="lib-pane-materials">
       <div class="lib-toolbar">
-        <div class="saved-search" style="margin:0;">
+        <div class="saved-search" style="margin:0;flex:1;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           <input type="text" id="matSearch" placeholder="搜尋名稱或備註" />
         </div>
+        <button class="btn btn-primary lib-add-btn" id="matAddBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          新增
+        </button>
       </div>
       <div class="lib-chips" id="matChips"></div>
       <div class="lib-grid" id="matGrid"></div>
@@ -262,6 +253,12 @@
 
     <!-- Sub-pane: 靈感 -->
     <div class="lib-pane" id="lib-pane-gallery" hidden>
+      <div class="lib-toolbar lib-toolbar-end">
+        <button class="btn btn-primary lib-add-btn" id="galAddBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          新增靈感
+        </button>
+      </div>
       <div class="lib-chips-label">色系</div>
       <div class="lib-chips" id="galChipsColor"></div>
       <div class="lib-chips-label">風格</div>
@@ -272,8 +269,26 @@
 
     <!-- Sub-pane: 作品 -->
     <div class="lib-pane" id="lib-pane-works" hidden>
+      <div class="lib-toolbar lib-toolbar-end">
+        <button class="btn btn-primary lib-add-btn" id="worksAddBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          新增作品
+        </button>
+      </div>
       <div class="lib-grid" id="worksGrid"></div>
       <div class="empty lib-empty" id="worksEmpty"></div>
+    </div>
+
+    <!-- Sub-pane: 計劃 -->
+    <div class="lib-pane" id="lib-pane-plans" hidden>
+      <div class="lib-toolbar lib-toolbar-end">
+        <button class="btn btn-primary lib-add-btn" id="plansAddBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          新增計劃
+        </button>
+      </div>
+      <div class="lib-grid" id="plansGrid"></div>
+      <div class="empty lib-empty" id="plansEmpty"></div>
     </div>
   </section>
 
@@ -729,6 +744,60 @@
   </div>
 </div>
 
+<!-- ============ MODAL: 計劃(新增/編輯) ============ -->
+<div class="modal-overlay" id="planEditModal" hidden>
+  <div class="modal" style="max-width: 540px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="planEditTitleH">新增計劃</h2>
+      <button class="icon-btn" id="planEditClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="field-label">計劃標題</label>
+        <input type="text" class="input" id="planTitle" maxlength="40" placeholder="例:春日法式漸層仿做計劃">
+      </div>
+      <div class="field">
+        <label class="field-label">整體想法 / 備註(選填)</label>
+        <textarea class="input" id="planNote" rows="2" maxlength="500" placeholder="例:整體想模仿這個感覺,但配色偏暖一點..."></textarea>
+      </div>
+
+      <h4 class="work-section-title">選擇參考靈感(可多張)</h4>
+      <div class="plan-insp-grid" id="planInspGrid"></div>
+      <div class="empty" id="planInspEmpty" hidden style="padding:18px 12px;font-size:13px;"></div>
+
+      <h4 class="work-section-title">預計步驟</h4>
+      <div id="planStepsList"></div>
+      <button class="btn btn-secondary btn-block" id="planAddStepBtn" type="button" style="margin-top:8px;">+ 新增步驟</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="planEditDelete" hidden>刪除</button>
+      <button class="btn btn-secondary" id="planEditCancel">取消</button>
+      <button class="btn btn-primary" id="planEditSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: 計劃詳細 ============ -->
+<div class="modal-overlay" id="planDetailModal" hidden>
+  <div class="modal" style="max-width: 540px;">
+    <div class="modal-header">
+      <h2 class="modal-title">計劃</h2>
+      <button class="icon-btn" id="planDetailClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="planDetailBody"></div>
+    <div class="modal-footer plan-detail-footer">
+      <button class="btn btn-secondary" id="planDetailEdit">編輯</button>
+      <button class="btn btn-primary" id="planDetailStart" hidden>▶ 開始實行</button>
+      <button class="btn btn-primary" id="planDetailComplete" hidden>✓ 標記完成</button>
+      <button class="btn btn-secondary" id="planDetailReopen" hidden>↺ 重新開啟</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ MODAL: 作品詳細 ============ -->
 <div class="modal-overlay" id="workDetailModal" hidden>
   <div class="modal" style="max-width: 540px;">
@@ -745,13 +814,14 @@
   </div>
 </div>
 
-<script src="media-db.js?v=4"></script>
-<script src="img-utils.js?v=4"></script>
-<script src="cat-manager.js?v=4"></script>
-<script src="materials.js?v=4"></script>
-<script src="gallery.js?v=4"></script>
-<script src="works.js?v=4"></script>
-<script src="inspire-picker.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="media-db.js?v=5"></script>
+<script src="img-utils.js?v=5"></script>
+<script src="cat-manager.js?v=5"></script>
+<script src="materials.js?v=5"></script>
+<script src="gallery.js?v=5"></script>
+<script src="works.js?v=5"></script>
+<script src="plans.js?v=5"></script>
+<script src="inspire-picker.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

@@ -2006,3 +2006,123 @@ details > div p:last-child { margin-bottom: 0; }
   font-size: 32px;
   color: var(--text-3);
 }
+
+/* ===== 圖庫:每個 pane 內部的 toolbar(取代擠在 view-header 的按鈕) ===== */
+.lib-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.lib-toolbar-end { justify-content: flex-end; }
+.lib-add-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+/* ===== 計劃 ===== */
+/* 計劃卡片:狀態 badge */
+.plan-status {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.plan-status-draft     { background: #f0f0f0; color: var(--text-2); }
+.plan-status-active    { background: #FEEAEC; color: var(--accent); }
+.plan-status-completed { background: #E8F5E9; color: #2E7D32; }
+.plan-meta-rest { color: var(--text-2); }
+
+/* 計劃編輯:靈感多選 grid */
+.plan-insp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px 2px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+.plan-insp-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  background: var(--surface);
+}
+.plan-insp-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.plan-insp-tile.selected { border-color: var(--link); }
+.plan-insp-check {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--link);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.plan-insp-tile.selected .plan-insp-check { opacity: 1; }
+
+/* 計劃詳細頁 */
+.plan-d-status {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+.plan-d-insps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.plan-d-insp {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.plan-d-insp img { width: 100%; height: 100%; object-fit: cover; }
+.plan-d-insp-name {
+  display: none; /* 太擠就先隱藏 */
+}
+.plan-d-times {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.plan-d-time-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.plan-d-time-dur {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.plan-d-time-when {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* 計劃 detail footer 三顆按鈕 */
+.plan-detail-footer .btn { flex: 1; }
