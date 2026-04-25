@@ -84,17 +84,34 @@
   }
 
   /* ---------- 分類定義(輕量 KV) ---------- */
+  function dedupeArr(arr) {
+    const seen = new Set();
+    return arr.filter(v => {
+      const k = (typeof v === 'string') ? v.trim() : v;
+      if (!k || seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }
   async function getCategoryDef(key, defaults) {
     const rec = await get(STORE_DEF, key);
-    if (rec && Array.isArray(rec.values)) return rec.values;
+    if (rec && Array.isArray(rec.values)) {
+      const cleaned = dedupeArr(rec.values);
+      if (cleaned.length !== rec.values.length) {
+        await put(STORE_DEF, { key, values: cleaned });
+      }
+      return cleaned;
+    }
     if (defaults) {
-      await put(STORE_DEF, { key, values: defaults.slice() });
-      return defaults.slice();
+      const cleaned = dedupeArr(defaults);
+      await put(STORE_DEF, { key, values: cleaned });
+      return cleaned.slice();
     }
     return [];
   }
   async function setCategoryDef(key, values) {
-    return put(STORE_DEF, { key, values: values.slice() });
+    const cleaned = dedupeArr(values);
+    return put(STORE_DEF, { key, values: cleaned });
   }
 
   /* ---------- 容量估算 ---------- */
