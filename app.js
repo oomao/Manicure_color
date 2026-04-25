@@ -336,6 +336,269 @@ function refreshMeView() {
     const cur = (window.Theme && Theme.get && Theme.get()) || 'auto';
     themeBtns.forEach(b => b.classList.toggle('active', b.dataset.themeMode === cur));
   }
+  // 色彩校正狀態
+  const calibSub = document.getElementById('calibEntrySub');
+  if (calibSub && window.Calibration) {
+    const cal = Calibration.get();
+    if (cal && cal.enabled) {
+      const d = new Date(cal.createdAt);
+      calibSub.textContent = `已校正(${d.getMonth()+1}/${d.getDate()}),點擊重新校正`;
+    } else {
+      calibSub.textContent = '用色卡校正不同光線下的拍照偏差';
+    }
+  }
+}
+
+/* ========== 色彩校正 modal ========== */
+let _calibInited = false;
+let _calibImg = null;       // 載入後的 Image 物件
+let _calibCanvas = null;
+let _calibCtx = null;
+let _calibCurrentTargetIdx = 0;
+let _calibSampled = [];     // 6 筆 [r,g,b]
+function bindCalibration() {
+  if (_calibInited || !window.Calibration) return;
+  const entry = document.getElementById('calibEntryCard');
+  const modal = document.getElementById('calibModal');
+  if (!entry || !modal) return;
+
+  const refCanvas = document.getElementById('calibRefCanvas');
+  const downloadBtn = document.getElementById('calibDownloadBtn');
+  const fileInput = document.getElementById('calibFile');
+  const photoWrap = document.getElementById('calibPhotoWrap');
+  const photoCanvas = document.getElementById('calibPhotoCanvas');
+  const pinLayer = document.getElementById('calibPinLayer');
+  const targetsEl = document.getElementById('calibTargets');
+  const progressEl = document.getElementById('calibProgress');
+  const previewTitle = document.getElementById('calibPreviewTitle');
+  const previewWrap = document.getElementById('calibPreview');
+  const saveBtn = document.getElementById('calibSaveBtn');
+  const clearBtn = document.getElementById('calibClearBtn');
+  const cancelBtn = document.getElementById('calibCancelBtn');
+  const closeBtn = document.getElementById('calibClose');
+  const statusEl = document.getElementById('calibStatus');
+
+  _calibCanvas = photoCanvas;
+  _calibCtx = photoCanvas.getContext('2d', { willReadFrequently: true });
+
+  function open() {
+    Calibration.drawReferenceCard(refCanvas);
+    _calibImg = null;
+    _calibSampled = [];
+    _calibCurrentTargetIdx = 0;
+    photoWrap.hidden = true;
+    pinLayer.innerHTML = '';
+    fileInput.value = '';
+    previewTitle.hidden = true;
+    previewWrap.hidden = true;
+    saveBtn.disabled = true;
+    const has = Calibration.isEnabled();
+    clearBtn.hidden = !has;
+    statusEl.textContent = has ? '✓ 目前有啟用校正,可重新校正或清除' : '尚未校正';
+    statusEl.className = 'calib-status' + (has ? ' calib-status-on' : '');
+    renderTargets();
+    renderProgress();
+    modal.hidden = false;
+  }
+  function close() {
+    modal.hidden = true;
+    _calibImg = null;
+    _calibSampled = [];
+  }
+
+  function renderTargets() {
+    const T = Calibration.TARGETS;
+    targetsEl.innerHTML = T.map((t, i) => {
+      const sampled = !!_calibSampled[i];
+      const active = i === _calibCurrentTargetIdx ? ' active' : '';
+      const done = sampled ? ' calib-target-done' : '';
+      const hex = '#' + t.rgb.map(v => v.toString(16).padStart(2,'0')).join('');
+      return `
+        <button type="button" class="chip chip-pick calib-target-chip${active}${done}" data-idx="${i}">
+          <span class="calib-target-sw" style="background:${hex}"></span>
+          ${t.name}${sampled ? ' ✓' : ''}
+        </button>
+      `;
+    }).join('');
+    targetsEl.querySelectorAll('.calib-target-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _calibCurrentTargetIdx = +btn.dataset.idx;
+        renderTargets();
+        renderProgress();
+      });
+    });
+  }
+  function renderProgress() {
+    const done = _calibSampled.filter(Boolean).length;
+    const T = Calibration.TARGETS;
+    if (done >= T.length) {
+      progressEl.textContent = `✓ 6/6 已採樣 — 點下方「儲存校正」`;
+      tryCompute();
+    } else {
+      progressEl.textContent = `${done}/6 已採樣 — 請點選「${T[_calibCurrentTargetIdx].name}」色塊在照片上的位置`;
+    }
+  }
+
+  function renderPin(i, x, y) {
+    const t = Calibration.TARGETS[i];
+    const dot = document.createElement('div');
+    dot.className = 'calib-pin';
+    dot.style.left = x + 'px';
+    dot.style.top = y + 'px';
+    dot.style.background = `rgb(${t.rgb.join(',')})`;
+    dot.dataset.idx = i;
+    dot.title = t.name;
+    pinLayer.appendChild(dot);
+  }
+  function refreshPins() {
+    pinLayer.innerHTML = '';
+    if (!_calibImg) return;
+    _calibSampled.forEach((s, i) => {
+      if (s && s.x != null) renderPin(i, s.x, s.y);
+    });
+  }
+
+  function samplePixelAvg(cx, cy, radius) {
+    const sx = Math.max(0, Math.floor(cx - radius));
+    const sy = Math.max(0, Math.floor(cy - radius));
+    const w = Math.min(radius * 2, _calibCanvas.width - sx);
+    const h = Math.min(radius * 2, _calibCanvas.height - sy);
+    const data = _calibCtx.getImageData(sx, sy, w, h).data;
+    let r=0, g=0, b=0, n=0;
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i]; g += data[i+1]; b += data[i+2]; n++;
+    }
+    return [Math.round(r/n), Math.round(g/n), Math.round(b/n)];
+  }
+
+  function onPhotoClick(clientX, clientY) {
+    if (!_calibImg) return;
+    const rect = _calibCanvas.getBoundingClientRect();
+    const cx = (clientX - rect.left) * (_calibCanvas.width  / rect.width);
+    const cy = (clientY - rect.top ) * (_calibCanvas.height / rect.height);
+    if (cx < 0 || cy < 0 || cx >= _calibCanvas.width || cy >= _calibCanvas.height) return;
+    const rgb = samplePixelAvg(cx, cy, 6);
+    const i = _calibCurrentTargetIdx;
+    _calibSampled[i] = {
+      rgb,
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
+    // 自動跳到下一個尚未採樣的
+    const T = Calibration.TARGETS;
+    for (let k = 1; k <= T.length; k++) {
+      const idx = (i + k) % T.length;
+      if (!_calibSampled[idx]) { _calibCurrentTargetIdx = idx; break; }
+    }
+    refreshPins();
+    renderTargets();
+    renderProgress();
+  }
+
+  photoCanvas.addEventListener('click', (e) => onPhotoClick(e.clientX, e.clientY));
+  photoCanvas.addEventListener('touchend', (e) => {
+    if (e.changedTouches && e.changedTouches.length) {
+      const t = e.changedTouches[0];
+      onPhotoClick(t.clientX, t.clientY);
+      e.preventDefault();
+    }
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        _calibImg = img;
+        const maxW = photoWrap.clientWidth || 480;
+        const scale = Math.min(1, maxW / img.width);
+        _calibCanvas.width  = Math.round(img.width * scale);
+        _calibCanvas.height = Math.round(img.height * scale);
+        _calibCtx.drawImage(img, 0, 0, _calibCanvas.width, _calibCanvas.height);
+        photoWrap.hidden = false;
+        _calibSampled = [];
+        _calibCurrentTargetIdx = 0;
+        pinLayer.innerHTML = '';
+        renderTargets();
+        renderProgress();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function tryCompute() {
+    const measured = _calibSampled.map(s => s && s.rgb).filter(Boolean);
+    if (measured.length < Calibration.TARGETS.length) {
+      saveBtn.disabled = true;
+      previewTitle.hidden = true;
+      previewWrap.hidden = true;
+      return;
+    }
+    const cal = Calibration.computeCalibration(measured);
+    if (!cal) {
+      saveBtn.disabled = true;
+      return;
+    }
+    // 預覽:把每個 measured 套上矩陣後跟 target 比對
+    const T = Calibration.TARGETS;
+    previewTitle.hidden = false;
+    previewWrap.hidden = false;
+    previewWrap.innerHTML = T.map((t, i) => {
+      const corrected = Calibration.applyToRgb(measured[i], cal);
+      const dE = Math.round(Math.sqrt(
+        (corrected[0]-t.rgb[0])**2 +
+        (corrected[1]-t.rgb[1])**2 +
+        (corrected[2]-t.rgb[2])**2
+      ));
+      return `
+        <div class="calib-pv-row">
+          <span class="calib-pv-label">${t.name}</span>
+          <div class="calib-pv-sw" style="background:rgb(${measured[i].join(',')})" title="拍到"></div>
+          <span class="calib-pv-arrow">→</span>
+          <div class="calib-pv-sw" style="background:rgb(${corrected.join(',')})" title="校正後"></div>
+          <span class="calib-pv-arrow">vs</span>
+          <div class="calib-pv-sw" style="background:rgb(${t.rgb.join(',')})" title="目標"></div>
+          <span class="calib-pv-de">ΔE ${dE}</span>
+        </div>
+      `;
+    }).join('');
+    saveBtn.disabled = false;
+    saveBtn._pendingCal = cal;
+  }
+
+  saveBtn.addEventListener('click', () => {
+    const cal = saveBtn._pendingCal;
+    if (!cal) return;
+    Calibration.save(cal);
+    refreshMeView();
+    close();
+    alert('色彩校正已儲存。之後從圖片取色都會自動套用。');
+  });
+  clearBtn.addEventListener('click', () => {
+    if (!confirm('清除目前的色彩校正?')) return;
+    Calibration.clear();
+    refreshMeView();
+    close();
+  });
+  cancelBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  downloadBtn.addEventListener('click', () => {
+    const url = refCanvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nail-mixer-calibration-card.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+
+  entry.addEventListener('click', open);
+  _calibInited = true;
 }
 
 /* ========== Mix view: image upload & pick ========== */
@@ -384,6 +647,14 @@ function drawImage(img, cvs, c, wrap) {
   cvs.width  = Math.round(img.width * scale);
   cvs.height = Math.round(img.height * scale);
   c.drawImage(img, 0, 0, cvs.width, cvs.height);
+  // 套用色彩校正(若有啟用)
+  if (window.Calibration && Calibration.isEnabled()) {
+    try {
+      const data = c.getImageData(0, 0, cvs.width, cvs.height);
+      Calibration.applyToImageData(data, Calibration.get());
+      c.putImageData(data, 0, 0);
+    } catch (e) { console.warn('apply calibration failed', e); }
+  }
 }
 
 function pickFromCanvas(cvs, c, ch, clientX, clientY) {
@@ -2533,4 +2804,5 @@ BASES = loadBases();
 rebuildLatents();
 SAVED = loadSaved();
 if (typeof bindMeView === 'function') bindMeView();
+if (typeof bindCalibration === 'function') bindCalibration();
 switchView('mix');

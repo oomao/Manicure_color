@@ -9,8 +9,8 @@
 <meta name="theme-color" content="#FAFAFA">
 <title>美甲調色</title>
 <script src="https://scrtwpns.com/mixbox.js"></script>
-<link rel="stylesheet" href="styles.css?v=7">
-<script src="theme.js?v=7"></script>
+<link rel="stylesheet" href="styles.css?v=8">
+<script src="theme.js?v=8"></script>
 </head>
 <body>
 <main>
@@ -335,6 +335,18 @@
       <div class="me-entry-info">
         <div class="title">基底色管理</div>
         <div class="sub" id="basesEntrySub">設定你手邊有的顏料</div>
+      </div>
+      <svg class="me-entry-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m9 18 6-6-6-6"/></svg>
+    </div>
+
+    <!-- 色彩校正入口 -->
+    <div class="card me-entry-card" id="calibEntryCard">
+      <div class="me-entry-icon" style="background: linear-gradient(135deg, #C99178, #E0B89C);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg>
+      </div>
+      <div class="me-entry-info">
+        <div class="title">色彩校正</div>
+        <div class="sub" id="calibEntrySub">用色卡校正不同光線下的拍照偏差</div>
       </div>
       <svg class="me-entry-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m9 18 6-6-6-6"/></svg>
     </div>
@@ -857,14 +869,67 @@
   </div>
 </div>
 
-<script src="media-db.js?v=7"></script>
-<script src="img-utils.js?v=7"></script>
-<script src="cat-manager.js?v=7"></script>
-<script src="materials.js?v=7"></script>
-<script src="gallery.js?v=7"></script>
-<script src="works.js?v=7"></script>
-<script src="plans.js?v=7"></script>
-<script src="inspire-picker.js?v=7"></script>
-<script src="app.js?v=7"></script>
+<!-- ============ MODAL: 色彩校正 ============ -->
+<div class="modal-overlay" id="calibModal" hidden>
+  <div class="modal" style="max-width: 540px;">
+    <div class="modal-header">
+      <h2 class="modal-title">色彩校正</h2>
+      <button class="icon-btn" id="calibClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="calib-status" id="calibStatus"></div>
+
+      <h4 class="work-section-title">1️⃣ 取得參考卡</h4>
+      <div class="calib-card-wrap">
+        <canvas id="calibRefCanvas"></canvas>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="btn btn-secondary" id="calibDownloadBtn" style="flex:1;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          下載 PNG
+        </button>
+      </div>
+      <div class="hint" style="margin-top:6px;">用霧面紙列印,大小不重要(名片大即可)。或用另一支手機 / 螢幕顯示這張卡也行。</div>
+
+      <h4 class="work-section-title">2️⃣ 拍照(把卡放凝膠旁,一起拍)</h4>
+      <label class="btn btn-secondary btn-block" for="calibFile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        選擇照片
+      </label>
+      <input type="file" id="calibFile" accept="image/*">
+
+      <div class="calib-photo-wrap" id="calibPhotoWrap" hidden>
+        <canvas id="calibPhotoCanvas"></canvas>
+        <div class="calib-marker" id="calibMarker"></div>
+        <div class="calib-pin-layer" id="calibPinLayer"></div>
+      </div>
+
+      <h4 class="work-section-title">3️⃣ 依序點選 6 個色塊位置</h4>
+      <div class="calib-progress" id="calibProgress">先選下方色塊,再點照片上對應位置</div>
+      <div class="lib-chips lib-chips-pick" id="calibTargets"></div>
+
+      <h4 class="work-section-title" id="calibPreviewTitle" hidden>4️⃣ 預覽校正效果</h4>
+      <div class="calib-preview" id="calibPreview" hidden></div>
+    </div>
+    <div class="modal-footer plan-detail-footer">
+      <button class="btn btn-secondary" id="calibClearBtn" hidden>清除校正</button>
+      <button class="btn btn-secondary" id="calibCancelBtn">取消</button>
+      <button class="btn btn-primary" id="calibSaveBtn" disabled>儲存校正</button>
+    </div>
+  </div>
+</div>
+
+<script src="calibration.js?v=8"></script>
+<script src="media-db.js?v=8"></script>
+<script src="img-utils.js?v=8"></script>
+<script src="cat-manager.js?v=8"></script>
+<script src="materials.js?v=8"></script>
+<script src="gallery.js?v=8"></script>
+<script src="works.js?v=8"></script>
+<script src="plans.js?v=8"></script>
+<script src="inspire-picker.js?v=8"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

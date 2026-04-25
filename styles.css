@@ -2323,3 +2323,129 @@ details > div p:last-child { margin-bottom: 0; }
   font-weight: 700;
   letter-spacing: -0.3px;
 }
+
+/* =============================================================================
+   色彩校正 (Phase 9 MVP)
+   ============================================================================= */
+.calib-status {
+  font-size: 13px;
+  color: var(--text-2);
+  background: var(--bg-2);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+.calib-status-on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.calib-card-wrap {
+  width: 100%;
+  background: var(--bg-2);
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 8px;
+}
+.calib-card-wrap canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 6px;
+}
+
+.calib-photo-wrap {
+  position: relative;
+  width: 100%;
+  margin-top: 10px;
+  background: var(--bg-2);
+  border-radius: 10px;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.calib-photo-wrap canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  cursor: crosshair;
+}
+.calib-pin-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.calib-pin {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.calib-progress {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg-2);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.calib-target-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.calib-target-sw {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.calib-target-done { opacity: 0.6; }
+.calib-target-done.active { opacity: 1; }
+
+.calib-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.calib-pv-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border-radius: 8px;
+  font-size: 12px;
+}
+.calib-pv-label {
+  font-weight: 700;
+  color: var(--text);
+  width: 24px;
+  flex-shrink: 0;
+}
+.calib-pv-sw {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.calib-pv-arrow {
+  color: var(--text-3);
+  font-size: 11px;
+}
+.calib-pv-de {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  font-size: 11px;
+}
