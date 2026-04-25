@@ -530,6 +530,186 @@
   }
   details > div p { margin: 0 0 8px; }
   details > div p:last-child { margin-bottom: 0; }
+
+  /* ========== Saved recipes ========== */
+  .saved-search {
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .saved-search input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text);
+    font-family: inherit;
+  }
+  .saved-search input:focus { outline: none; border-color: var(--link); }
+  .saved-search svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px; height: 16px;
+    color: var(--text-2);
+    pointer-events: none;
+  }
+  .saved-list { display: flex; flex-direction: column; gap: 12px; }
+  .saved-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    transition: background 0.12s;
+  }
+  .saved-card:active { background: var(--bg); }
+  .saved-card .swatch-pair {
+    width: 40px; height: 56px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.05);
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .saved-card .swatch-pair > div { flex: 1; }
+  .saved-card .body { flex: 1; min-width: 0; }
+  .saved-card .title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .saved-card .meta {
+    font-size: 12px;
+    color: var(--text-2);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .saved-card .meta .de {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .saved-card .photo-thumb {
+    width: 56px; height: 56px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.05);
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .saved-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .saved-tag {
+    font-size: 11px;
+    color: var(--text-2);
+    background: var(--bg);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border-soft);
+  }
+
+  .save-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0));
+    transform: translateX(-50%);
+    background: rgba(38,38,38,0.95);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    animation: toastIn 0.18s ease;
+    pointer-events: none;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translate(-50%, 6px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+
+  .detail-photo-wrap {
+    position: relative;
+    margin-top: 8px;
+  }
+  .detail-photo {
+    width: 100%;
+    border-radius: 12px;
+    display: block;
+  }
+  .detail-photo-remove {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .detail-photo-remove svg { width: 16px; height: 16px; }
+  .detail-add-photo {
+    margin-top: 8px;
+  }
+  .detail-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .detail-section:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  .detail-section .label {
+    font-size: 11px;
+    color: var(--text-2);
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .detail-section .body-text {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .detail-actions-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .detail-actions-row .btn { flex: 1; }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
+  .btn-danger:active { opacity: 0.85; }
+
+  .stale-banner {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    border-radius: 8px;
+    color: #92400E;
+    font-size: 12px;
+    line-height: 1.5;
+  }
 </style>
 </head>
 <body>
@@ -583,6 +763,17 @@
         <div id="recipeList"></div>
         <div class="ratio-bar" id="ratioSummary"></div>
 
+        <div class="detail-actions-row" style="margin-top: 14px;">
+          <button class="btn btn-secondary" id="copyRecipeBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            複製配方
+          </button>
+          <button class="btn btn-primary" id="saveRecipeBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            收藏配方
+          </button>
+        </div>
+
         <div class="note">
           <b>關於「份」的計量：</b>
           建議用 0.01 g 電子秤（1 份 = 0.10 g）；次選牙籤尖刮一團米粒大（直徑 ~3 mm）。
@@ -596,11 +787,27 @@
 
   <!-- ============ VIEW: 收藏 ============ -->
   <section class="view view-saved" id="view-saved" hidden>
-    <div class="view-header"><h1>收藏</h1></div>
-    <div class="empty">
+    <div class="view-header">
+      <h1>收藏</h1>
+      <span class="hint" id="savedCount" style="margin: 0; font-size: 12px;"></span>
+    </div>
+
+    <div class="saved-search" id="savedSearchWrap" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="savedSearch" placeholder="搜尋名稱、備註或標籤" />
+    </div>
+
+    <div id="savedListWrap" class="saved-list"></div>
+
+    <div id="savedEmpty" class="empty">
       <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      <div>配方收藏功能開發中</div>
-      <div class="sub-msg">Phase 7 上線</div>
+      <div>還沒有收藏配方</div>
+      <div class="sub-msg">在「調色」頁面點選顏色後，按下「收藏配方」即可</div>
+    </div>
+
+    <div id="savedNoResult" class="empty" hidden>
+      <div>沒有符合的配方</div>
+      <div class="sub-msg">試試其他關鍵字</div>
     </div>
   </section>
 
@@ -776,6 +983,67 @@
     </div>
   </div>
 </div>
+
+<!-- ============ MODAL: Save Recipe ============ -->
+<div class="modal-overlay" id="saveModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">收藏這個配方</h2>
+      <button class="icon-btn" id="saveModalClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="compare" style="margin-bottom: 14px;">
+        <div class="compare-cell">
+          <div class="label">目標色</div>
+          <div class="swatch" id="saveTargetSwatch" style="height: 56px;"></div>
+          <div class="hex" id="saveTargetHex"></div>
+        </div>
+        <div class="compare-cell">
+          <div class="label">預估</div>
+          <div class="swatch" id="savePredictSwatch" style="height: 56px;"></div>
+          <div class="hex" id="savePredictHex"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">名稱 <span class="required">*</span></label>
+        <input type="text" class="input" id="saveName" maxlength="30" placeholder="例：海鹽藍 / 法式米白">
+      </div>
+      <div class="field">
+        <label class="field-label">標籤（用空白或逗號分隔，選填）</label>
+        <input type="text" class="input" id="saveTags" maxlength="60" placeholder="例：春夏 漸層 法式">
+      </div>
+      <div class="field">
+        <label class="field-label">備註（選填）</label>
+        <input type="text" class="input" id="saveNote" maxlength="100" placeholder="例：拍照偏冷光，實際偏暖一點">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="saveModalCancel">取消</button>
+      <button class="btn btn-primary" id="saveModalSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Recipe Detail ============ -->
+<div class="modal-overlay" id="detailModal" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="detailTitle">配方</h2>
+      <button class="icon-btn" id="detailClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="detailDelete">刪除</button>
+      <button class="btn btn-primary" id="detailRemix">再做一次</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="photoFileInput" accept="image/*" style="display: none;">
 
 <script>
 /* =========================================================================
@@ -1006,6 +1274,7 @@ function switchView(name) {
   Object.entries(views).forEach(([k, el]) => { el.hidden = (k !== name); });
   tabbarBtns.forEach(b => b.classList.toggle('active', b.dataset.view === name));
   if (name === 'bases') renderBases();
+  if (name === 'saved') renderSaved();
   window.scrollTo(0, 0);
 }
 tabbarBtns.forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
@@ -1155,6 +1424,24 @@ function showResult(target) {
   } else {
     gamutWarning.hidden = true;
   }
+
+  // 記錄目前結果，給「複製配方」「收藏配方」使用
+  lastResult = {
+    target: target.slice(),
+    targetHex: rgbToHex(target),
+    predicted: mixed,
+    predictedHex: rgbToHex(mixed),
+    deltaE: dE,
+    parts: BASES
+      .map((b, i) => ({
+        hex: b.hex,
+        name: b.name,
+        sub: b.sub || '',
+        parts: best.parts[i],
+      }))
+      .filter(p => p.parts > 0),
+    totalParts: best.total,
+  };
 }
 
 /* ========== Bases view ========== */
@@ -1434,9 +1721,583 @@ modalSave.addEventListener('click', () => {
   closeModal();
 });
 
+/* =========================================================================
+   Phase 7：配方收藏 / 調色日記
+   ========================================================================= */
+
+const SAVED_KEY = 'nail-color-mixer.saved.v1';
+const MAX_SAVED = 200;
+const PHOTO_MAX_DIM = 720;
+const PHOTO_QUALITY = 0.7;
+
+let SAVED = [];           // Array<SavedRecipe>
+let lastResult = null;    // 最近一次調色結果
+let detailCurrentId = null; // 目前打開的詳細頁配方 id
+
+/* ---------- Storage ---------- */
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(SAVED_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(r => r && r.id && Array.isArray(r.parts))
+      .map(r => ({
+        id: r.id,
+        name: typeof r.name === 'string' ? r.name : '',
+        note: typeof r.note === 'string' ? r.note : '',
+        tags: Array.isArray(r.tags) ? r.tags.filter(Boolean) : [],
+        targetHex: isValidHex(r.targetHex) ? normalizeHex(r.targetHex) : '#888888',
+        predictedHex: isValidHex(r.predictedHex) ? normalizeHex(r.predictedHex) : '#888888',
+        deltaE: typeof r.deltaE === 'number' ? r.deltaE : 0,
+        parts: r.parts.map(p => ({
+          hex: isValidHex(p.hex) ? normalizeHex(p.hex) : '#888888',
+          name: typeof p.name === 'string' ? p.name : '?',
+          sub: typeof p.sub === 'string' ? p.sub : '',
+          parts: typeof p.parts === 'number' ? p.parts : 0,
+        })),
+        totalParts: typeof r.totalParts === 'number' ? r.totalParts : 0,
+        photo: typeof r.photo === 'string' ? r.photo : null,
+        createdAt: typeof r.createdAt === 'number' ? r.createdAt : Date.now(),
+        updatedAt: typeof r.updatedAt === 'number' ? r.updatedAt : (r.createdAt || Date.now()),
+      }));
+  } catch (err) {
+    console.warn('saved load failed', err);
+    return [];
+  }
+}
+
+function saveSaved() {
+  try {
+    localStorage.setItem(SAVED_KEY, JSON.stringify(SAVED));
+    return true;
+  } catch (err) {
+    console.warn('saved save failed', err);
+    if (err && err.name === 'QuotaExceededError') {
+      alert('儲存空間不足。建議刪除一些已收藏配方或移除照片後再試。');
+    }
+    return false;
+  }
+}
+
+function parseTags(s) {
+  return String(s || '')
+    .split(/[,，\s]+/)
+    .map(t => t.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+/* ---------- Toast ---------- */
+let _toastTimer = null;
+function toast(msg) {
+  let el = document.querySelector('.save-toast');
+  if (el) el.remove();
+  el = document.createElement('div');
+  el.className = 'save-toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.remove(), 1800);
+}
+
+/* ---------- Recipe → text （for clipboard / share） ---------- */
+function recipeToText(r) {
+  const lines = [];
+  lines.push(`【${r.name || '未命名配方'}】`);
+  lines.push(`目標色 ${r.targetHex} → 預估 ${r.predictedHex} (ΔE ${r.deltaE.toFixed(1)})`);
+  lines.push('');
+  lines.push('配方：');
+  r.parts.forEach(p => {
+    const subStr = p.sub ? ` (${p.sub})` : '';
+    lines.push(`  ${p.name}${subStr}：${p.parts} 份`);
+  });
+  lines.push(`總計 ${r.totalParts} 份`);
+  if (r.tags && r.tags.length) lines.push(`標籤：${r.tags.join(' ')}`);
+  if (r.note) {
+    lines.push('');
+    lines.push(`備註：${r.note}`);
+  }
+  lines.push('');
+  lines.push('— 美甲調色');
+  return lines.join('\n');
+}
+
+async function copyToClipboard(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (_) { /* fallthrough */ }
+  // Fallback：textarea + execCommand
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (_) {
+    return false;
+  }
+}
+
+/* ---------- 結果頁：複製 / 收藏按鈕 ---------- */
+const copyRecipeBtn = document.getElementById('copyRecipeBtn');
+const saveRecipeBtn = document.getElementById('saveRecipeBtn');
+
+copyRecipeBtn.addEventListener('click', async () => {
+  if (!lastResult) return;
+  const text = recipeToText({
+    name: '配方',
+    targetHex: lastResult.targetHex,
+    predictedHex: lastResult.predictedHex,
+    deltaE: lastResult.deltaE,
+    parts: lastResult.parts,
+    totalParts: lastResult.totalParts,
+    tags: [],
+    note: '',
+  });
+  const ok = await copyToClipboard(text);
+  toast(ok ? '已複製到剪貼簿' : '複製失敗，請手動選取');
+});
+
+saveRecipeBtn.addEventListener('click', () => {
+  if (!lastResult) return;
+  openSaveModal();
+});
+
+/* ---------- Save modal ---------- */
+const saveModal       = document.getElementById('saveModal');
+const saveModalClose  = document.getElementById('saveModalClose');
+const saveModalCancel = document.getElementById('saveModalCancel');
+const saveModalSave   = document.getElementById('saveModalSave');
+const saveTargetSwatch  = document.getElementById('saveTargetSwatch');
+const saveTargetHex     = document.getElementById('saveTargetHex');
+const savePredictSwatch = document.getElementById('savePredictSwatch');
+const savePredictHex    = document.getElementById('savePredictHex');
+const saveNameInput = document.getElementById('saveName');
+const saveTagsInput = document.getElementById('saveTags');
+const saveNoteInput = document.getElementById('saveNote');
+
+function openSaveModal() {
+  if (!lastResult) return;
+  saveTargetSwatch.style.background  = lastResult.targetHex;
+  savePredictSwatch.style.background = lastResult.predictedHex;
+  saveTargetHex.textContent  = lastResult.targetHex;
+  savePredictHex.textContent = lastResult.predictedHex;
+  saveNameInput.value = lastResult.targetHex;
+  saveTagsInput.value = '';
+  saveNoteInput.value = '';
+  saveModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => {
+    saveNameInput.focus();
+    saveNameInput.select();
+  }, 50);
+}
+function closeSaveModal() {
+  saveModal.hidden = true;
+  document.body.style.overflow = '';
+}
+saveModalClose.addEventListener('click', closeSaveModal);
+saveModalCancel.addEventListener('click', closeSaveModal);
+saveModal.addEventListener('click', (e) => {
+  if (e.target === saveModal) closeSaveModal();
+});
+
+saveModalSave.addEventListener('click', () => {
+  if (!lastResult) { closeSaveModal(); return; }
+  if (SAVED.length >= MAX_SAVED) {
+    alert(`收藏已達上限 ${MAX_SAVED} 個，請先刪除舊的`);
+    return;
+  }
+  const name = saveNameInput.value.trim() || lastResult.targetHex;
+  const tags = parseTags(saveTagsInput.value);
+  const note = saveNoteInput.value.trim();
+  const now = Date.now();
+  const recipe = {
+    id: genId(),
+    name,
+    note,
+    tags,
+    targetHex: lastResult.targetHex,
+    predictedHex: lastResult.predictedHex,
+    deltaE: lastResult.deltaE,
+    parts: lastResult.parts.map(p => ({ hex: p.hex, name: p.name, sub: p.sub, parts: p.parts })),
+    totalParts: lastResult.totalParts,
+    photo: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  SAVED.unshift(recipe);
+  if (saveSaved()) {
+    closeSaveModal();
+    toast('已加入收藏');
+  } else {
+    SAVED.shift();
+    alert('儲存失敗');
+  }
+});
+
+/* ---------- Saved list view ---------- */
+const savedListWrap   = document.getElementById('savedListWrap');
+const savedEmpty      = document.getElementById('savedEmpty');
+const savedNoResult   = document.getElementById('savedNoResult');
+const savedSearchWrap = document.getElementById('savedSearchWrap');
+const savedSearchInput = document.getElementById('savedSearch');
+const savedCount      = document.getElementById('savedCount');
+
+function timeAgo(ts) {
+  const d = (Date.now() - ts) / 1000;
+  if (d < 60) return '剛剛';
+  if (d < 3600) return Math.floor(d/60) + ' 分鐘前';
+  if (d < 86400) return Math.floor(d/3600) + ' 小時前';
+  if (d < 86400 * 30) return Math.floor(d/86400) + ' 天前';
+  const dt = new Date(ts);
+  return `${dt.getFullYear()}/${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+function recipeMatches(r, q) {
+  if (!q) return true;
+  const lower = q.toLowerCase();
+  if ((r.name || '').toLowerCase().includes(lower)) return true;
+  if ((r.note || '').toLowerCase().includes(lower)) return true;
+  if (r.tags && r.tags.some(t => t.toLowerCase().includes(lower))) return true;
+  if ((r.targetHex || '').toLowerCase().includes(lower)) return true;
+  return false;
+}
+
+function renderSaved() {
+  const total = SAVED.length;
+  savedCount.textContent = total > 0 ? `${total} 個配方` : '';
+  savedSearchWrap.hidden = total === 0;
+
+  if (total === 0) {
+    savedListWrap.innerHTML = '';
+    savedEmpty.hidden = false;
+    savedNoResult.hidden = true;
+    return;
+  }
+  savedEmpty.hidden = true;
+
+  const q = (savedSearchInput.value || '').trim();
+  const list = SAVED.filter(r => recipeMatches(r, q));
+  if (list.length === 0) {
+    savedListWrap.innerHTML = '';
+    savedNoResult.hidden = false;
+    return;
+  }
+  savedNoResult.hidden = true;
+
+  const html = list.map(r => {
+    const dE = r.deltaE.toFixed(1);
+    const ratio = r.parts.map(p => p.parts).join(' : ');
+    const namesShort = r.parts.map(p => p.name).join(':');
+    const photoHtml = r.photo
+      ? `<img class="photo-thumb" src="${r.photo}" alt="">`
+      : '';
+    const tagsHtml = (r.tags && r.tags.length)
+      ? `<div class="saved-tags">${r.tags.map(t => `<span class="saved-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+      : '';
+    return `
+      <div class="saved-card" data-id="${r.id}">
+        <div class="swatch-pair" aria-hidden="true">
+          <div style="background:${r.targetHex}"></div>
+          <div style="background:${r.predictedHex}"></div>
+        </div>
+        <div class="body">
+          <div class="title">${escapeHtml(r.name || r.targetHex)}</div>
+          <div class="meta">
+            <span class="de">ΔE ${dE}</span>
+            <span>${ratio} （${escapeHtml(namesShort)}）</span>
+            <span>${timeAgo(r.updatedAt || r.createdAt)}</span>
+          </div>
+          ${tagsHtml}
+        </div>
+        ${photoHtml}
+      </div>
+    `;
+  }).join('');
+  savedListWrap.innerHTML = html;
+}
+
+savedSearchInput.addEventListener('input', renderSaved);
+
+savedListWrap.addEventListener('click', (e) => {
+  const card = e.target.closest('.saved-card');
+  if (!card) return;
+  openDetail(card.dataset.id);
+});
+
+/* ---------- Detail modal ---------- */
+const detailModal  = document.getElementById('detailModal');
+const detailClose  = document.getElementById('detailClose');
+const detailTitle  = document.getElementById('detailTitle');
+const detailBody   = document.getElementById('detailBody');
+const detailDelete = document.getElementById('detailDelete');
+const detailRemix  = document.getElementById('detailRemix');
+const photoFileInput = document.getElementById('photoFileInput');
+
+function openDetail(id) {
+  const r = SAVED.find(x => x.id === id);
+  if (!r) return;
+  detailCurrentId = id;
+  renderDetail(r);
+  detailModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetail() {
+  detailModal.hidden = true;
+  document.body.style.overflow = '';
+  detailCurrentId = null;
+}
+detailClose.addEventListener('click', closeDetail);
+detailModal.addEventListener('click', (e) => {
+  if (e.target === detailModal) closeDetail();
+});
+
+function renderDetail(r) {
+  detailTitle.textContent = r.name || r.targetHex;
+
+  // 比對基底色變動
+  const stale = isRecipeStale(r);
+
+  const recipeRows = r.parts.map(p => `
+    <div class="recipe-row">
+      <div class="color-dot" style="background:${p.hex}"></div>
+      <div class="recipe-info">
+        <div class="name">${escapeHtml(p.name)}</div>
+        ${p.sub ? `<div class="sub">${escapeHtml(p.sub)}</div>` : ''}
+      </div>
+      <div class="recipe-parts">${p.parts}<span class="unit">份</span></div>
+    </div>
+  `).join('');
+
+  const ratio = r.parts.map(p => p.parts).join(' : ');
+  const namesShort = r.parts.map(p => p.name).join(':');
+
+  const photoHtml = r.photo
+    ? `<div class="detail-photo-wrap">
+         <img class="detail-photo" src="${r.photo}" alt="成品">
+         <button class="detail-photo-remove" id="removePhotoBtn" aria-label="移除照片">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+         </button>
+       </div>`
+    : `<button class="btn btn-secondary btn-block detail-add-photo" id="addPhotoBtn">
+         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+         加上成品照片
+       </button>`;
+
+  const tagsHtml = (r.tags && r.tags.length)
+    ? r.tags.map(t => `<span class="saved-tag">${escapeHtml(t)}</span>`).join('')
+    : '<span style="color: var(--text-3);">（無）</span>';
+
+  const dE = r.deltaE;
+  let level, color;
+  if (dE < 2)       { level = '肉眼幾乎無差'; color = '#2ECC71'; }
+  else if (dE < 5)  { level = '非常接近';     color = '#27AE60'; }
+  else if (dE < 10) { level = '接近';         color = '#F1C40F'; }
+  else if (dE < 20) { level = '中等';         color = '#F39C12'; }
+  else              { level = '差距較大';     color = '#E74C3C'; }
+
+  detailBody.innerHTML = `
+    <div class="detail-section">
+      <div class="compare">
+        <div class="compare-cell">
+          <div class="label">目標色</div>
+          <div class="swatch" style="height: 80px; background:${r.targetHex};"></div>
+          <div class="hex">${r.targetHex}</div>
+        </div>
+        <div class="compare-cell">
+          <div class="label">預估</div>
+          <div class="swatch" style="height: 80px; background:${r.predictedHex};"></div>
+          <div class="hex">${r.predictedHex}</div>
+        </div>
+      </div>
+      <div class="accuracy">
+        <span class="accuracy-dot" style="background:${color}"></span>色差 <span class="accuracy-de">ΔE ${dE.toFixed(1)}</span> · ${level}
+      </div>
+      ${stale ? `<div class="stale-banner">⚠️ 此配方使用的基底色與目前設定不同（已被刪除或修改），「再做一次」會用目前基底色重算最佳配方。</div>` : ''}
+    </div>
+
+    <div class="detail-section">
+      <div class="label">配方</div>
+      <div>${recipeRows}</div>
+      <div class="ratio-bar" style="margin-top: 12px;">比例 ${ratio}  （${escapeHtml(namesShort)}），共 ${r.totalParts} 份</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="label">標籤</div>
+      <div style="display:flex; flex-wrap:wrap; gap:4px;">${tagsHtml}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="label">備註</div>
+      <div class="body-text">${r.note ? escapeHtml(r.note) : '<span style="color: var(--text-3);">（無）</span>'}</div>
+      <button class="btn btn-secondary btn-block" id="editMetaBtn" style="margin-top:8px;">
+        編輯名稱 / 標籤 / 備註
+      </button>
+    </div>
+
+    <div class="detail-section">
+      <div class="label">成品照片</div>
+      ${photoHtml}
+    </div>
+
+    <div class="detail-section">
+      <div class="label">分享</div>
+      <button class="btn btn-secondary btn-block" id="shareBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        複製成文字（可貼到 LINE / IG）
+      </button>
+    </div>
+  `;
+
+  // 綁細節按鈕
+  const addBtn    = document.getElementById('addPhotoBtn');
+  const removeBtn = document.getElementById('removePhotoBtn');
+  const editBtn   = document.getElementById('editMetaBtn');
+  const shareBtn  = document.getElementById('shareBtn');
+  if (addBtn)    addBtn.addEventListener('click', () => photoFileInput.click());
+  if (removeBtn) removeBtn.addEventListener('click', () => removePhoto(r.id));
+  if (editBtn)   editBtn.addEventListener('click', () => editMeta(r.id));
+  if (shareBtn)  shareBtn.addEventListener('click', async () => {
+    const ok = await copyToClipboard(recipeToText(r));
+    toast(ok ? '已複製到剪貼簿' : '複製失敗');
+  });
+}
+
+/* 此配方所引用的基底色，跟目前 BASES 是否一致？ */
+function isRecipeStale(r) {
+  for (const p of r.parts) {
+    const matched = BASES.find(b => b.hex.toLowerCase() === p.hex.toLowerCase());
+    if (!matched) return true;
+  }
+  return false;
+}
+
+/* ---------- Detail：刪除 / 再做一次 / 編輯 meta / 照片 ---------- */
+detailDelete.addEventListener('click', () => {
+  if (!detailCurrentId) return;
+  const r = SAVED.find(x => x.id === detailCurrentId);
+  if (!r) return;
+  if (!confirm(`確定要刪除「${r.name || r.targetHex}」嗎？`)) return;
+  SAVED = SAVED.filter(x => x.id !== detailCurrentId);
+  saveSaved();
+  closeDetail();
+  renderSaved();
+  toast('已刪除');
+});
+
+detailRemix.addEventListener('click', () => {
+  if (!detailCurrentId) return;
+  const r = SAVED.find(x => x.id === detailCurrentId);
+  if (!r) return;
+  closeDetail();
+  switchView('mix');
+  // 用儲存的目標色重新計算
+  const targetRgb = hexToRgb(r.targetHex);
+  onPickTarget(targetRgb);
+  setTimeout(() => {
+    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+});
+
+function editMeta(id) {
+  const r = SAVED.find(x => x.id === id);
+  if (!r) return;
+  const newName = prompt('名稱：', r.name || r.targetHex);
+  if (newName === null) return;
+  const newTags = prompt('標籤（用空白或逗號分隔）：', (r.tags || []).join(' '));
+  if (newTags === null) return;
+  const newNote = prompt('備註：', r.note || '');
+  if (newNote === null) return;
+  r.name = newName.trim() || r.targetHex;
+  r.tags = parseTags(newTags);
+  r.note = newNote.trim();
+  r.updatedAt = Date.now();
+  if (saveSaved()) {
+    renderDetail(r);
+    renderSaved();
+    toast('已更新');
+  }
+}
+
+function removePhoto(id) {
+  const r = SAVED.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm('要移除這張成品照片嗎？')) return;
+  r.photo = null;
+  r.updatedAt = Date.now();
+  if (saveSaved()) {
+    renderDetail(r);
+    renderSaved();
+    toast('已移除照片');
+  }
+}
+
+/* ---------- Photo：壓縮 + 存進當前 detail recipe ---------- */
+photoFileInput.addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ''; // 允許再選同一張
+  if (!file || !detailCurrentId) return;
+  const r = SAVED.find(x => x.id === detailCurrentId);
+  if (!r) return;
+  try {
+    const dataUrl = await compressImage(file, PHOTO_MAX_DIM, PHOTO_QUALITY);
+    r.photo = dataUrl;
+    r.updatedAt = Date.now();
+    if (saveSaved()) {
+      renderDetail(r);
+      renderSaved();
+      toast('已加上照片');
+    } else {
+      r.photo = null;
+    }
+  } catch (err) {
+    console.warn(err);
+    alert('照片處理失敗');
+  }
+});
+
+function compressImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        const c = cv.getContext('2d');
+        c.fillStyle = '#fff';
+        c.fillRect(0, 0, w, h);
+        c.drawImage(img, 0, 0, w, h);
+        try {
+          resolve(cv.toDataURL('image/jpeg', quality));
+        } catch (err) { reject(err); }
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 /* ========== Init ========== */
 BASES = loadBases();
 rebuildLatents();
+SAVED = loadSaved();
 switchView('mix');
 </script>
 </body>
