@@ -447,12 +447,18 @@ canvas {
 .modal-overlay {
   position: fixed;
   inset: 0;
+  /* 用 dvh 才會扣掉 iOS Chrome / Safari 的工具列高度;不支援的瀏覽器 fallback 到 vh */
+  height: 100vh;
+  height: 100dvh;
   background: rgba(0,0,0,0.65);
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  /* iOS 安全區域(home bar / 動態島)+ 確保不被瀏覽器底部工具列擋到 */
+  padding-top: max(16px, env(safe-area-inset-top, 16px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
   animation: fadeIn 0.2s ease;
 }
 .modal-overlay[hidden] { display: none; }
@@ -462,6 +468,7 @@ canvas {
   width: 100%;
   max-width: 420px;
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1580,7 +1587,10 @@ details > div p:last-child { margin-bottom: 0; }
 
 /* 橫螢幕手機 — modal 不要超出螢幕、碼表縮小 */
 @media (max-height: 600px) and (orientation: landscape) {
-  .modal { max-height: calc(100vh - 16px); }
+  .modal {
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
   .modal-body { padding: 12px 16px; }
   .stopwatch-time { font-size: 38px; }
   .stopwatch-time .cs { font-size: 22px; }
