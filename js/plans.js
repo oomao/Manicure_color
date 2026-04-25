@@ -843,6 +843,7 @@
     if (!id) return;
     const it = _items.find(x => x.id === id);
     if (!it) return;
+    if (!confirm('確定要重新開啟此計劃?\n會把它從「已完成」搬回「未完成」,但時間記錄會保留。')) return;
     it.status = 'draft';
     it.completedAt = null;
     it.updatedAt = Date.now();

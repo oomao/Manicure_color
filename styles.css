@@ -2458,16 +2458,17 @@ details > div p:last-child { margin-bottom: 0; }
    v10 — 修正 / 新功能
    ============================================================================= */
 
-/* 日期輸入框寬度修正(避免 iOS Safari/Chrome 撐開 modal,
-   iOS 顯示「2026年4月26日」會比一般「年/月/日」寬很多) */
+/* 日期輸入框寬度修正
+   注意:不能用 -webkit-appearance: none,iOS Safari/Chrome 會把
+   原本的「年/月/日」placeholder 隱藏,空值時看不到任何提示。
+   改用 box-sizing + max-width + min-width:0 處理寬度溢出。 */
 input[type="date"], input[type="time"], input[type="datetime-local"], .input-date {
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  -webkit-appearance: none;
-  appearance: none;
   font-size: 13px;
+  min-height: 36px;
 }
 .input-date::-webkit-date-and-time-value {
   text-align: left;
@@ -2570,6 +2571,15 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
 [data-theme="dark"] .input,
 [data-theme="dark"] .select { border-color: var(--border); }
 
+/* 主題切換 — 深色下 .theme-btn.active 的 surface 跟容器 bg-2 同色,
+   會看不出哪個被選中。改用 surface-2 + 邊框讓 active 更明顯 */
+[data-theme="dark"] .theme-switcher { background: var(--bg); }
+[data-theme="dark"] .theme-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+[data-theme="dark"] .theme-btn { color: var(--text-2); }
+
 /* 自動深色模式 — 鏡像 [data-theme="dark"] 的關鍵修正 */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) .palette-card {
@@ -2613,6 +2623,9 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
   :root:not([data-theme]) .saved-tag { background: var(--bg-2); color: var(--text-2); border-color: var(--border); }
   :root:not([data-theme]) .note { background: var(--bg-2); border-color: var(--border); color: var(--text-2); }
   :root:not([data-theme]) .hint { color: var(--text-2); }
+  :root:not([data-theme]) .theme-switcher { background: var(--bg); }
+  :root:not([data-theme]) .theme-btn.active { background: var(--accent); color: var(--bg); }
+  :root:not([data-theme]) .theme-btn { color: var(--text-2); }
 }
 
 /* ===== 深色模式 — 修正 white-on-light 對比災難 =====
