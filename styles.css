@@ -2715,10 +2715,9 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
 [data-app-mode="beauty"] .tabbar-btn svg { stroke-width: 1.6; }
 [data-app-mode="beauty"] .tabbar-btn.active svg { stroke-width: 2; }
 
-/* 美妝模式 — 隱藏不適用的功能(調色 / 配方 / 作品) */
+/* 美妝模式 — 隱藏整個調色 + 紀錄(美妝目前只用圖庫 + 我的) */
 [data-app-mode="beauty"] .tabbar-btn[data-view="mix"] { display: none !important; }
-[data-app-mode="beauty"] .tabs-btn[data-rectab="recipes"] { display: none !important; }
-[data-app-mode="beauty"] .tabs-btn[data-rectab="works"] { display: none !important; }
+[data-app-mode="beauty"] .tabbar-btn[data-view="record"] { display: none !important; }
 
 /* 圖庫頁顯示一條 mode 指示條 */
 .lib-mode-stripe {
