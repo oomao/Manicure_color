@@ -2592,33 +2592,33 @@ function swLap() {
   renderSwLaps();
 }
 
-swPrimary.addEventListener('click', () => {
+// 全域碼表入口已被移除(用「資料備份」取代)。下面這些 listener 仍保留以
+// 防有外部呼叫 timerModal,但用 null guard 避免錯誤
+if (swPrimary) swPrimary.addEventListener('click', () => {
   if (swState === 'running') swStop();
   else swStart();
 });
-swSecondary.addEventListener('click', () => {
+if (swSecondary) swSecondary.addEventListener('click', () => {
   if (swState === 'running') swLap();
   else swReset();
 });
 
-timerCard.addEventListener('click', () => {
+if (timerCard) timerCard.addEventListener('click', () => {
   timerModal.hidden = false;
   document.body.style.overflow = 'hidden';
   renderSwTime();
   renderSwButtons();
   renderSwLaps();
-  // 進入 modal 時若是 running，重新接上 raf 迴圈（之前可能 close 時被取消）
   if (swState === 'running' && swRafId == null) {
     swRafId = requestAnimationFrame(swTick);
   }
 });
 function closeTimerModal() {
-  timerModal.hidden = true;
+  if (timerModal) timerModal.hidden = true;
   document.body.style.overflow = '';
-  // running 狀態下 raf 繼續跑也沒事；保留繼續計時
 }
-timerClose.addEventListener('click', closeTimerModal);
-timerModal.addEventListener('click', (e) => {
+if (timerClose) timerClose.addEventListener('click', closeTimerModal);
+if (timerModal) timerModal.addEventListener('click', (e) => {
   if (e.target === timerModal) closeTimerModal();
 });
 
