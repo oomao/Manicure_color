@@ -2589,31 +2589,118 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
 [data-theme="dark"] .input,
 [data-theme="dark"] .select { border-color: var(--border); }
 
-/* ===== 美妝模式視覺差異 — 整體調性改成「莓果紫紅」一點,跟美甲玫瑰粉拉開 =====
-   只覆寫 accent / link / accent-soft,bg / surface 等保持一致 */
-[data-app-mode="beauty"] {
-  --accent:       #9B4F75;
-  --accent-soft:  #F5E1E9;
-  --link:         #9B4F75;
-  --link-hover:   #B36286;
-  --rose-gold:    #B07594;
+/* ===== 美妝模式 — 整套設計改頭換面,從美甲的「暖米 + 玫瑰金」
+   換成美妝的「奶油桃 + 深莓紫 + 古銅金」,連背景 / 圓角 / 字體都換 ===== */
+
+/* 淺色:奶油桃底 + 深莓紫 accent */
+[data-app-mode="beauty"]:root,
+:root[data-app-mode="beauty"] {
+  --bg:           #FAF1EA;   /* 奶油桃 */
+  --bg-2:         #F2E0D6;   /* 略深的桃 */
+  --surface:      #FFFAF5;   /* 象牙白 */
+  --surface-2:    #FAF1EA;
+  --text:         #3A2330;   /* 深莓紫 */
+  --text-2:       #84596F;   /* 莓灰 */
+  --text-3:       #C0A0B2;
+  --border:       #E5CCD8;
+  --border-soft:  #F0DEE3;
+  --accent:       #8E3A60;   /* 莓果紫紅 */
+  --accent-soft:  #F4DEEB;
+  --rose-gold:    #C68C6E;   /* 古銅金 */
+  --link:         #722D4D;
+  --link-hover:   #8E3A60;
+  --shadow-sm:    0 1px 2px rgba(58, 35, 48, 0.08);
+  --shadow-md:    0 4px 14px rgba(58, 35, 48, 0.10);
+  --shadow-lg:    0 12px 32px rgba(58, 35, 48, 0.16);
 }
+
+/* 深色:深莓黑 + 淺粉紫 accent */
 [data-theme="dark"][data-app-mode="beauty"] {
+  --bg:           #1A0F18;
+  --bg-2:         #251925;
+  --surface:      #2A1D2A;
+  --surface-2:    #342435;
+  --text:         #F4E8EE;
+  --text-2:       #D2B5C5;
+  --text-3:       #92778A;
+  --border:       #5A4154;
+  --border-soft:  #463141;
   --accent:       #D8A4C4;
-  --accent-soft:  #3B2433;
+  --accent-soft:  #3B2434;
+  --rose-gold:    #C99AB4;
   --link:         #D8A4C4;
   --link-hover:   #E8C0D6;
-  --rose-gold:    #C99AB4;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme])[data-app-mode="beauty"] {
+    --bg:           #1A0F18;
+    --bg-2:         #251925;
+    --surface:      #2A1D2A;
+    --surface-2:    #342435;
+    --text:         #F4E8EE;
+    --text-2:       #D2B5C5;
+    --text-3:       #92778A;
+    --border:       #5A4154;
+    --border-soft:  #463141;
     --accent:       #D8A4C4;
-    --accent-soft:  #3B2433;
+    --accent-soft:  #3B2434;
+    --rose-gold:    #C99AB4;
     --link:         #D8A4C4;
     --link-hover:   #E8C0D6;
-    --rose-gold:    #C99AB4;
   }
 }
+
+/* 美妝模式 — 主要標題用襯線字增加優雅感 */
+[data-app-mode="beauty"] body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+[data-app-mode="beauty"] .view-header h1,
+[data-app-mode="beauty"] .modal-title,
+[data-app-mode="beauty"] .work-detail-title,
+[data-app-mode="beauty"] .hero-greeting,
+[data-app-mode="beauty"] .me-card-title {
+  font-family: "Noto Serif TC", "Source Han Serif", "Songti TC", "PingFang TC", serif;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+/* 美妝模式 — 圓角更俐落、邊框更細緻、按鈕更扁平 */
+[data-app-mode="beauty"] .card,
+[data-app-mode="beauty"] .me-card,
+[data-app-mode="beauty"] .me-entry-card,
+[data-app-mode="beauty"] .lib-card,
+[data-app-mode="beauty"] .palette-card,
+[data-app-mode="beauty"] .saved-card { border-radius: 6px; }
+[data-app-mode="beauty"] .modal { border-radius: 10px; }
+[data-app-mode="beauty"] .btn { border-radius: 4px; }
+[data-app-mode="beauty"] .input,
+[data-app-mode="beauty"] .select { border-radius: 4px; }
+[data-app-mode="beauty"] .chip { border-radius: 999px; }
+
+/* 美妝模式 — 加上一條細緻的金色 hero accent */
+[data-app-mode="beauty"] .hero-greeting::before {
+  content: "✦";
+  margin-right: 6px;
+  color: var(--rose-gold);
+  font-size: 0.7em;
+  vertical-align: middle;
+}
+
+/* 美妝模式 — 主按鈕用實色填色更有刊登感 */
+[data-app-mode="beauty"] .btn-primary {
+  background: var(--accent);
+  color: #FFFAF5;
+  letter-spacing: 0.4px;
+}
+[data-theme="dark"][data-app-mode="beauty"] .btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* 美妝模式 — tab bar 線條感更纖細 */
+[data-app-mode="beauty"] .tabbar-btn { font-weight: 500; letter-spacing: 0.4px; }
+[data-app-mode="beauty"] .tabbar-btn svg { stroke-width: 1.6; }
+[data-app-mode="beauty"] .tabbar-btn.active svg { stroke-width: 2; }
 
 /* 圖庫頁顯示一條 mode 指示條 */
 .lib-mode-stripe {
