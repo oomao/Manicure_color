@@ -64,16 +64,15 @@
       if (!map.has(k)) map.set(k, { plans: [], works: [] });
       return map.get(k);
     };
-    const modeFilter = (it) => !window.AppMode || AppMode.modeOf(it) === AppMode.get();
     if (window.Plans && Plans.getAll) {
-      Plans.getAll().filter(modeFilter).forEach(p => {
+      Plans.getAll().forEach(p => {
         const ts = p.scheduledDate || p.planDate;
         const k = dateKeyFromTs(ts);
         if (k) ensure(k).plans.push(p);
       });
     }
     if (window.Works && Works.getAll) {
-      Works.getAll().filter(modeFilter).forEach(w => {
+      Works.getAll().forEach(w => {
         const k = dateKeyFromTs(w.date);
         if (k) ensure(k).works.push(w);
       });

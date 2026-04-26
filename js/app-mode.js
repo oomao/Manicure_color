@@ -17,12 +17,47 @@
     } catch (_) { return DEFAULT; }
   }
 
+  const META = {
+    manicure: { emoji: '💅', name: '美甲模式', libTitle: '美甲圖庫' },
+    beauty:   { emoji: '💄', name: '美妝模式', libTitle: '美妝圖庫' },
+  };
+
   function set(mode) {
     if (!VALID.includes(mode)) return;
+    const before = get();
     try { localStorage.setItem(KEY, mode); } catch (_) {}
     document.documentElement.setAttribute('data-app-mode', mode);
     renderButtons();
+    syncUI();
     notifyChange();
+    if (before !== mode) showToast(`已切換到 ${META[mode].emoji} ${META[mode].name}`);
+  }
+
+  function syncUI() {
+    const meta = META[get()] || META.manicure;
+    const stripe = document.getElementById('libModeStripe');
+    if (stripe) {
+      const e = stripe.querySelector('.lib-mode-emoji');
+      const n = stripe.querySelector('.lib-mode-name');
+      if (e) e.textContent = meta.emoji;
+      if (n) n.textContent = meta.name;
+    }
+    const libTitle = document.getElementById('libTitle');
+    if (libTitle) libTitle.textContent = meta.libTitle;
+  }
+
+  function showToast(msg) {
+    let t = document.getElementById('appModeToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'appModeToast';
+      t.className = 'save-toast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(showToast._tid);
+    showToast._tid = setTimeout(() => { t.style.opacity = '0'; }, 1600);
   }
 
   function notifyChange() {
@@ -51,6 +86,7 @@
       set(btn.dataset.appMode);
     });
     renderButtons();
+    syncUI();
   }
 
   window.AppMode = { init, get, set, modeOf };

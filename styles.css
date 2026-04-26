@@ -759,6 +759,7 @@ details > div p:last-child { margin-bottom: 0; }
   box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   animation: toastIn 0.18s ease;
   pointer-events: none;
+  transition: opacity 0.25s ease;
 }
 @keyframes toastIn {
   from { opacity: 0; transform: translate(-50%, 6px); }
@@ -2587,6 +2588,55 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
 [data-theme="dark"] .btn-secondary { border-color: var(--border); }
 [data-theme="dark"] .input,
 [data-theme="dark"] .select { border-color: var(--border); }
+
+/* ===== 美妝模式視覺差異 — 整體調性改成「莓果紫紅」一點,跟美甲玫瑰粉拉開 =====
+   只覆寫 accent / link / accent-soft,bg / surface 等保持一致 */
+[data-app-mode="beauty"] {
+  --accent:       #9B4F75;
+  --accent-soft:  #F5E1E9;
+  --link:         #9B4F75;
+  --link-hover:   #B36286;
+  --rose-gold:    #B07594;
+}
+[data-theme="dark"][data-app-mode="beauty"] {
+  --accent:       #D8A4C4;
+  --accent-soft:  #3B2433;
+  --link:         #D8A4C4;
+  --link-hover:   #E8C0D6;
+  --rose-gold:    #C99AB4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme])[data-app-mode="beauty"] {
+    --accent:       #D8A4C4;
+    --accent-soft:  #3B2433;
+    --link:         #D8A4C4;
+    --link-hover:   #E8C0D6;
+    --rose-gold:    #C99AB4;
+  }
+}
+
+/* 圖庫頁顯示一條 mode 指示條 */
+.lib-mode-stripe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.lib-mode-stripe .lib-mode-emoji { font-size: 18px; }
+.lib-mode-stripe .lib-mode-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-left: auto;
+}
+[data-theme="dark"] .lib-mode-stripe { color: var(--text); }
 
 /* 主題切換 — 深色下 .theme-btn.active 的 surface 跟容器 bg-2 同色,
    看不出哪個被選中。用 surface-2(淺一階)+ accent 邊框,不要全粉太突兀 */

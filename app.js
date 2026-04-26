@@ -1260,7 +1260,6 @@ saveModalSave.addEventListener('click', () => {
     name,
     note,
     tags,
-    mode: (window.AppMode ? AppMode.get() : 'manicure'),
     targetHex: lastResult.targetHex,
     predictedHex: lastResult.predictedHex,
     deltaE: lastResult.deltaE,
@@ -1309,11 +1308,7 @@ function recipeMatches(r, q) {
 }
 
 function renderSaved() {
-  // 依 app mode 過濾
-  const inMode = window.AppMode
-    ? SAVED.filter(r => (window.AppMode.modeOf(r) === window.AppMode.get()))
-    : SAVED;
-  const total = inMode.length;
+  const total = SAVED.length;
   savedCount.textContent = total > 0 ? `${total} 個配方` : '';
   savedSearchWrap.hidden = total === 0;
 
@@ -1326,7 +1321,7 @@ function renderSaved() {
   savedEmpty.hidden = true;
 
   const q = (savedSearchInput.value || '').trim();
-  const list = inMode.filter(r => recipeMatches(r, q));
+  const list = SAVED.filter(r => recipeMatches(r, q));
   if (list.length === 0) {
     savedListWrap.innerHTML = '';
     savedNoResult.hidden = false;
@@ -2661,10 +2656,7 @@ paletteCard && paletteCard.addEventListener('click', () => switchView('bases'));
 
 function renderRecentRail() {
   if (!recentRail) return;
-  const inMode = window.AppMode
-    ? SAVED.filter(r => window.AppMode.modeOf(r) === window.AppMode.get())
-    : SAVED;
-  const items = inMode.slice(0, 6);
+  const items = SAVED.slice(0, 6);
   if (items.length === 0) {
     recentRail.innerHTML = `<div class="rail-empty">還沒收藏配方 — 調出滿意的顏色後按「收藏配方」</div>`;
     if (recentMore) recentMore.style.display = 'none';
@@ -2821,9 +2813,4 @@ SAVED = loadSaved();
 if (typeof bindMeView === 'function') bindMeView();
 if (typeof bindCalibration === 'function') bindCalibration();
 if (window.AppMode && AppMode.init) AppMode.init();
-document.addEventListener('app-mode-change', () => {
-  if (typeof renderSaved === 'function') renderSaved();
-  if (typeof renderRecentRail === 'function') renderRecentRail();
-  if (typeof renderHero === 'function') renderHero();
-});
 switchView('mix');
