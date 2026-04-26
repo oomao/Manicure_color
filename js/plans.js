@@ -175,6 +175,8 @@
     elStepsList.addEventListener('click', onStepListClick);
     elStepsList.addEventListener('input', onStepListInput);
     elStepsList.addEventListener('change', onStepListChange);
+
+    document.addEventListener('app-mode-change', () => renderGrid());
   }
 
   /* ---------- 資料 helper ---------- */
@@ -219,6 +221,7 @@
 
   /* ---------- Render grid (3 區塊) ---------- */
   function passesFilter(it) {
+    if (window.AppMode && AppMode.modeOf(it) !== AppMode.get()) return false;
     if (_searchTerm) {
       const hay = [
         it.title || '',
@@ -598,6 +601,7 @@
           note: noteVal,
           planDate,
           scheduledDate,
+          mode: (window.AppMode ? AppMode.get() : 'manicure'),
           inspirationIds: _draft.inspirationIds.slice(),
           steps: stepsToSave,
           status: 'draft',

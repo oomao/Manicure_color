@@ -147,6 +147,8 @@
     elStepsList.addEventListener('click', onStepListClick);
     elStepsList.addEventListener('input', onStepListInput);
     elStepsList.addEventListener('change', onStepListChange);
+
+    document.addEventListener('app-mode-change', () => renderGrid());
   }
 
   /* ---------- 資料 helper ---------- */
@@ -161,6 +163,10 @@
   /* ---------- Render grid ---------- */
   function renderGrid() {
     let list = _items.slice();
+    if (window.AppMode) {
+      const m = AppMode.get();
+      list = list.filter(it => AppMode.modeOf(it) === m);
+    }
     if (_searchTerm) {
       list = list.filter(it => {
         const hay = [
@@ -547,6 +553,7 @@
           title,
           date: dateVal,
           planId,
+          mode: (window.AppMode ? AppMode.get() : 'manicure'),
           note: noteVal,
           steps: stepsToSave,
           coverBlob: _draft._coverBlob || null,
