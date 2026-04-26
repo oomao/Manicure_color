@@ -80,7 +80,7 @@
   function setupDatePlaceholders() {
     [elDateFrom, elDateTo].forEach((input) => {
       if (!input || input.parentElement.classList.contains('date-wrap')) return;
-      const wrap = document.createElement('span');
+      const wrap = document.createElement('div');
       wrap.className = 'date-wrap';
       input.parentNode.insertBefore(wrap, input);
       wrap.appendChild(input);
