@@ -72,7 +72,27 @@
     await reloadDeps();
 
     bindUI();
+    setupDatePlaceholders();
     renderGrid();
+  }
+
+  // iOS 在某些情況不顯示「年/月/日」placeholder,自製一個 overlay
+  function setupDatePlaceholders() {
+    [elDateFrom, elDateTo].forEach((input) => {
+      if (!input || input.parentElement.classList.contains('date-wrap')) return;
+      const wrap = document.createElement('span');
+      wrap.className = 'date-wrap';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+      const ph = document.createElement('span');
+      ph.className = 'date-ph';
+      ph.textContent = '年/月/日';
+      wrap.appendChild(ph);
+      const sync = () => { ph.hidden = !!input.value; };
+      input.addEventListener('input', sync);
+      input.addEventListener('change', sync);
+      sync();
+    });
   }
 
   async function reloadDeps() {
@@ -128,6 +148,11 @@
     if (elDateClear) elDateClear.addEventListener('click', () => {
       _dateFrom = ''; _dateTo = '';
       elDateFrom.value = ''; elDateTo.value = '';
+      // 同步 placeholder
+      [elDateFrom, elDateTo].forEach(i => {
+        const ph = i && i.parentElement && i.parentElement.querySelector('.date-ph');
+        if (ph) ph.hidden = false;
+      });
       renderGrid();
     });
 
@@ -628,6 +653,44 @@
     renderDetailBody(it);
     elDetailModal.hidden = false;
     if (it.status === 'active') startDetailTimerLoop();
+    bindEditableTimer();
+  }
+
+  function bindEditableTimer() {
+    const tm = elDetailBody.querySelector('[data-plan-timer]');
+    if (!tm || !tm.dataset.editable) return;
+    tm.addEventListener('click', onEditTimerClick, { once: true });
+  }
+
+  async function onEditTimerClick() {
+    const id = elDetailModal.dataset.planId;
+    if (!id) return;
+    const it = _items.find(x => x.id === id);
+    if (!it || it.status !== 'active' || !it.timerPaused) return;
+    const ms = it.accumulatedMs || 0;
+    const totalSec = Math.floor(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    const current = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    const inp = prompt('輸入新的已實行時間 (HH:MM:SS):', current);
+    if (inp == null) {
+      // 取消後重新綁定 click,讓使用者下次仍可點擊編輯
+      bindEditableTimer();
+      return;
+    }
+    const parts = inp.trim().split(':').map(p => parseInt(p, 10));
+    if (parts.length === 0 || parts.some(isNaN)) { alert('格式錯誤,請用 HH:MM:SS 或 MM:SS'); bindEditableTimer(); return; }
+    let nh = 0, nm = 0, ns = 0;
+    if (parts.length >= 3) { nh = parts[0]; nm = parts[1]; ns = parts[2]; }
+    else if (parts.length === 2) { nm = parts[0]; ns = parts[1]; }
+    else { ns = parts[0]; }
+    if (nh < 0 || nm < 0 || ns < 0 || nm >= 60 || ns >= 60) { alert('時間超出範圍'); bindEditableTimer(); return; }
+    const newMs = (nh * 3600 + nm * 60 + ns) * 1000;
+    it.accumulatedMs = newMs;
+    it.updatedAt = Date.now();
+    await MediaDB.put(STORE, it);
+    renderDetailBody(it);
   }
 
   function renderDetailBody(it) {
@@ -658,11 +721,14 @@
       const isPaused = !!it.timerPaused;
       const ms = getElapsedMs(it);
       const t = fmtTimer(ms);
+      const editable = isPaused ? ' is-editable' : '';
+      const editHint = isPaused ? '<div class="plan-d-timer-edit-hint">點擊時間可調整</div>' : '';
       timerBlock = `
-        <div class="plan-d-timer" data-plan-timer>
+        <div class="plan-d-timer${editable}" data-plan-timer${isPaused ? ' data-editable="1"' : ''}>
           <div class="plan-d-timer-label">已實行時間</div>
           <div class="plan-d-timer-time" data-timer-display>${t.main}<span class="cs">.${t.cs}</span></div>
           <div class="plan-d-timer-state ${isPaused ? 'is-paused' : 'is-running'}" data-timer-state>${isPaused ? '已暫停' : '進行中'}</div>
+          ${editHint}
         </div>
       `;
     }

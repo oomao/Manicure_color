@@ -77,14 +77,21 @@
       const id = card.dataset.id;
       if (id) openModal(id);
     });
+    document.addEventListener('app-mode-change', () => {
+      renderChips();
+      renderGrid();
+    });
   }
 
   /* ---------- Render ---------- */
   function renderChips() {
     const all = ['all'].concat(_categories);
+    const inMode = window.AppMode
+      ? _items.filter(it => AppMode.modeOf(it) === AppMode.get())
+      : _items;
     const chipsHtml = all.map(c => {
       const label = c === 'all' ? '全部' : c;
-      const count = c === 'all' ? _items.length : _items.filter(it => it.category === c).length;
+      const count = c === 'all' ? inMode.length : inMode.filter(it => it.category === c).length;
       const active = c === _filterCat ? ' active' : '';
       return `<button class="chip${active}" data-cat="${escapeHtml(c)}">${escapeHtml(label)} <span class="chip-n">${count}</span></button>`;
     }).join('');
@@ -131,6 +138,11 @@
 
   function renderGrid() {
     let list = _items.slice();
+    // 依照當前 app mode 過濾
+    if (window.AppMode) {
+      const m = AppMode.get();
+      list = list.filter(it => AppMode.modeOf(it) === m);
+    }
     if (_filterCat !== 'all') list = list.filter(it => it.category === _filterCat);
     if (_searchTerm) {
       list = list.filter(it =>
@@ -279,6 +291,7 @@
         const rec = {
           id: MediaDB.genId(),
           name, category, note,
+          mode: (window.AppMode ? AppMode.get() : 'manicure'),
           blob: _stagedImg.fullBlob,
           thumbBlob: _stagedImg.thumbBlob,
           createdAt: now,

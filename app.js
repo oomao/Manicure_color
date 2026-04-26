@@ -2812,4 +2812,5 @@ rebuildLatents();
 SAVED = loadSaved();
 if (typeof bindMeView === 'function') bindMeView();
 if (typeof bindCalibration === 'function') bindCalibration();
+if (window.AppMode && AppMode.init) AppMode.init();
 switchView('mix');

@@ -89,14 +89,21 @@
       const card = e.target.closest('.lib-card');
       if (card && card.dataset.id) openModal(card.dataset.id);
     });
+    document.addEventListener('app-mode-change', () => {
+      renderFilterChips();
+      renderGrid();
+    });
   }
 
   /* ---------- Render filter chips ---------- */
   function renderFilterChips() {
+    const inMode = window.AppMode
+      ? _items.filter(it => AppMode.modeOf(it) === AppMode.get())
+      : _items;
     const colorOpts = ['all'].concat(_colors);
     const colorHtml = colorOpts.map(c => {
       const label = c === 'all' ? '全色系' : c;
-      const count = c === 'all' ? _items.length : _items.filter(it => getColors(it).includes(c)).length;
+      const count = c === 'all' ? inMode.length : inMode.filter(it => getColors(it).includes(c)).length;
       const active = c === _filterColor ? ' active' : '';
       return `<button class="chip${active}" data-color="${escapeHtml(c)}">${escapeHtml(label)} <span class="chip-n">${count}</span></button>`;
     }).join('');
@@ -113,7 +120,7 @@
     const styleOpts = ['all'].concat(_styles);
     const styleHtml = styleOpts.map(s => {
       const label = s === 'all' ? '全風格' : s;
-      const count = s === 'all' ? _items.length : _items.filter(it => Array.isArray(it.styles) && it.styles.includes(s)).length;
+      const count = s === 'all' ? inMode.length : inMode.filter(it => Array.isArray(it.styles) && it.styles.includes(s)).length;
       const active = s === _filterStyle ? ' active' : '';
       return `<button class="chip${active}" data-style="${escapeHtml(s)}">${escapeHtml(label)} <span class="chip-n">${count}</span></button>`;
     }).join('');
@@ -193,6 +200,10 @@
 
   function renderGrid() {
     let list = _items.slice();
+    if (window.AppMode) {
+      const m = AppMode.get();
+      list = list.filter(it => AppMode.modeOf(it) === m);
+    }
     if (_filterColor !== 'all') list = list.filter(it => getColors(it).includes(_filterColor));
     if (_filterStyle !== 'all') list = list.filter(it => Array.isArray(it.styles) && it.styles.includes(_filterStyle));
     if (list.length === 0) {
@@ -323,6 +334,7 @@
         const rec = {
           id: MediaDB.genId(),
           name, note, colorFamily, colorFamilies, styles,
+          mode: (window.AppMode ? AppMode.get() : 'manicure'),
           blob: _stagedImg.fullBlob,
           thumbBlob: _stagedImg.thumbBlob,
           createdAt: now,

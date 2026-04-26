@@ -359,6 +359,23 @@
       </div>
     </div>
 
+    <!-- 模式切換:美甲 / 美妝 -->
+    <div class="card me-card">
+      <div class="me-card-head">
+        <span class="me-card-icon">💅</span>
+        <span class="me-card-title">使用模式</span>
+      </div>
+      <div class="theme-switcher app-mode-switcher">
+        <button class="theme-btn" data-app-mode="manicure">
+          <span class="theme-btn-emoji">💅</span><span>美甲</span>
+        </button>
+        <button class="theme-btn" data-app-mode="beauty">
+          <span class="theme-btn-emoji">💄</span><span>美妝</span>
+        </button>
+      </div>
+      <div class="hint" style="margin-top:8px;">切換後,材料庫與靈感會分開顯示。配方/計劃/作品仍共用。</div>
+    </div>
+
     <!-- 基底色管理入口 -->
     <div class="card me-entry-card" id="basesEntryCard">
       <div class="me-entry-icon" style="background: linear-gradient(135deg, var(--accent), var(--rose-gold));">
@@ -1030,6 +1047,7 @@
   </div>
 </div>
 
+<script src="js/app-mode.js?v=11"></script>
 <script src="js/calibration.js?v=11"></script>
 <script src="js/media-db.js?v=11"></script>
 <script src="js/img-utils.js?v=11"></script>

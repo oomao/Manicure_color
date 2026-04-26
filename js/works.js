@@ -61,7 +61,26 @@
     await reloadDeps();
 
     bindUI();
+    setupDatePlaceholders();
     renderGrid();
+  }
+
+  function setupDatePlaceholders() {
+    [elDateFrom, elDateTo].forEach((input) => {
+      if (!input || input.parentElement.classList.contains('date-wrap')) return;
+      const wrap = document.createElement('span');
+      wrap.className = 'date-wrap';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+      const ph = document.createElement('span');
+      ph.className = 'date-ph';
+      ph.textContent = '年/月/日';
+      wrap.appendChild(ph);
+      const sync = () => { ph.hidden = !!input.value; };
+      input.addEventListener('input', sync);
+      input.addEventListener('change', sync);
+      sync();
+    });
   }
 
   async function reloadDeps() {
@@ -112,6 +131,10 @@
     if (elDateClear) elDateClear.addEventListener('click', () => {
       _dateFrom = ''; _dateTo = '';
       elDateFrom.value = ''; elDateTo.value = '';
+      [elDateFrom, elDateTo].forEach(i => {
+        const ph = i && i.parentElement && i.parentElement.querySelector('.date-ph');
+        if (ph) ph.hidden = false;
+      });
       renderGrid();
     });
 
