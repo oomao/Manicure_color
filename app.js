@@ -346,6 +346,12 @@ function bindMeView() {
     _backupScope = b.dataset.backupScope;
     scopeBtns.forEach(x => x.classList.toggle('active', x === b));
   }));
+  const strategyBtns = document.querySelectorAll('[data-import-strategy]');
+  let _importStrategy = 'merge';
+  strategyBtns.forEach(b => b.addEventListener('click', () => {
+    _importStrategy = b.dataset.importStrategy;
+    strategyBtns.forEach(x => x.classList.toggle('active', x === b));
+  }));
   backupCard && backupCard.addEventListener('click', () => {
     if (!window.Backup) { alert('JSZip 載入失敗,備份功能無法使用'); return; }
     backupExportStatus.textContent = '';
@@ -374,8 +380,10 @@ function bindMeView() {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
+    const label = _importStrategy === 'replace' ? '取代' : '合併';
+    if (!confirm(`使用「${label}」方式匯入?`)) return;
     try {
-      await Backup.importAll(file, (msg) => { backupImportStatus.textContent = msg; });
+      await Backup.importAll(file, _importStrategy, (msg) => { backupImportStatus.textContent = msg; });
     } catch (err) {
       console.warn(err);
       backupImportStatus.textContent = '✕ 匯入失敗:' + (err.message || err);

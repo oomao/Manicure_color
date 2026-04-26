@@ -14,8 +14,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
 <script src="https://scrtwpns.com/mixbox.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<link rel="stylesheet" href="styles.css?v=16">
-<script src="js/theme.js?v=16"></script>
+<link rel="stylesheet" href="styles.css?v=17">
+<script src="js/theme.js?v=17"></script>
 </head>
 <body>
 <main>
@@ -999,14 +999,27 @@
       </button>
       <div class="hint" id="backupExportStatus" style="margin-top:6px; min-height: 16px;"></div>
 
-      <h4 class="work-detail-section" style="margin-top:18px;">匯入</h4>
-      <label class="btn btn-secondary btn-block" for="backupImportFile" style="margin-top:6px;">
+      <h4 class="work-detail-section" style="margin-top:18px;">匯入方式</h4>
+      <div class="theme-switcher" style="margin-bottom: 6px;">
+        <button class="theme-btn active" data-import-strategy="merge">
+          <span class="theme-btn-emoji">➕</span><span>合併</span>
+        </button>
+        <button class="theme-btn" data-import-strategy="replace">
+          <span class="theme-btn-emoji">♻️</span><span>取代</span>
+        </button>
+      </div>
+      <div class="hint" style="margin-top:6px;">
+        <b>合併</b>:加在現有資料上,同 ID 才覆蓋。<br>
+        <b>取代</b>:先把同範圍的舊資料清空,再寫入備份內容。
+      </div>
+
+      <label class="btn btn-secondary btn-block" for="backupImportFile" style="margin-top:10px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
         選擇備份 zip
       </label>
       <input type="file" id="backupImportFile" accept=".zip,application/zip" style="display:none;">
       <div class="hint" id="backupImportStatus" style="margin-top:6px; min-height: 16px;"></div>
-      <div class="hint" style="margin-top:8px;">⚠️ 匯入會覆蓋同 ID 的項目。建議先匯出當前資料保險。</div>
+      <div class="hint" style="margin-top:8px;">⚠️ 匯入前建議先匯出當前資料保險。</div>
     </div>
   </div>
 </div>
@@ -1096,18 +1109,18 @@
   </div>
 </div>
 
-<script src="js/app-mode.js?v=16"></script>
-<script src="js/calibration.js?v=16"></script>
-<script src="js/media-db.js?v=16"></script>
-<script src="js/img-utils.js?v=16"></script>
-<script src="js/cat-manager.js?v=16"></script>
-<script src="js/materials.js?v=16"></script>
-<script src="js/gallery.js?v=16"></script>
-<script src="js/works.js?v=16"></script>
-<script src="js/plans.js?v=16"></script>
-<script src="js/inspire-picker.js?v=16"></script>
-<script src="js/calendar.js?v=16"></script>
-<script src="js/backup.js?v=16"></script>
-<script src="app.js?v=16"></script>
+<script src="js/app-mode.js?v=17"></script>
+<script src="js/calibration.js?v=17"></script>
+<script src="js/media-db.js?v=17"></script>
+<script src="js/img-utils.js?v=17"></script>
+<script src="js/cat-manager.js?v=17"></script>
+<script src="js/materials.js?v=17"></script>
+<script src="js/gallery.js?v=17"></script>
+<script src="js/works.js?v=17"></script>
+<script src="js/plans.js?v=17"></script>
+<script src="js/inspire-picker.js?v=17"></script>
+<script src="js/calendar.js?v=17"></script>
+<script src="js/backup.js?v=17"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>

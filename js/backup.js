@@ -127,6 +127,7 @@
 
   /* ========== EXPORT ========== */
   async function exportAll(scope, onStatus) {
+    if (window.MediaDB && MediaDB.init) await MediaDB.init();
     const zip = new JSZip();
     const blobsFolder = zip.folder('blobs');
     onStatus && onStatus('打包中...');
@@ -183,7 +184,10 @@
   }
 
   /* ========== IMPORT ========== */
-  async function importAll(file, onStatus) {
+  // strategy: 'merge'(同 ID 覆蓋,其餘保留) | 'replace'(先清空再匯入)
+  async function importAll(file, strategy, onStatus) {
+    if (window.MediaDB && MediaDB.init) await MediaDB.init();
+
     onStatus && onStatus('讀取 zip...');
     const zip = await JSZip.loadAsync(file);
     const manifestFile = zip.file('manifest.json');
@@ -192,18 +196,19 @@
     if (manifest.app !== '美甲調色') throw new Error('不是美甲調色 app 的備份');
     if (manifest.version !== 1) throw new Error('不支援的備份版本:' + manifest.version);
 
-    const scopeLabel = manifest.scope === 'all' ? '全部' : (manifest.scope === 'beauty' ? '美妝' : '美甲');
-    const ok = confirm(
-      `備份內容:${scopeLabel}\n` +
-      `匯出時間:${manifest.exportedAt}\n\n` +
-      `匯入會把同 ID 的項目覆蓋,確定繼續?`
-    );
-    if (!ok) { onStatus && onStatus('已取消'); return false; }
+    if (strategy !== 'merge' && strategy !== 'replace') {
+      throw new Error('未指定匯入方式');
+    }
 
     // localStorage
     const lsFile = zip.file('localStorage.json');
     if (lsFile) {
       const ls = JSON.parse(await lsFile.async('string'));
+      if (strategy === 'replace') {
+        // 清掉同 scope 的 localStorage 鍵
+        const toClear = lsKeys(manifest.scope || 'all');
+        toClear.forEach(k => { try { localStorage.removeItem(k); } catch (_) {} });
+      }
       Object.entries(ls).forEach(([k, v]) => {
         try { localStorage.setItem(k, v); } catch (_) {}
       });
@@ -211,19 +216,37 @@
 
     // IndexedDB
     let imported = 0;
+    let cleared = 0;
     for (const store of STORES) {
       const f = zip.file(`indexeddb/${store}.json`);
       if (!f) continue;
       const items = JSON.parse(await f.async('string'));
+
+      if (strategy === 'replace') {
+        // 把符合此次匯入 scope 的舊項目刪掉(避免把另一個模式的舊資料一起清掉)
+        const existing = await MediaDB.getAll(store);
+        for (const ex of existing) {
+          if (!shouldIncludeRecord(store, ex, manifest.scope || 'all')) continue;
+          const k = ex.id || ex.key;
+          if (k != null) {
+            try { await MediaDB.del(store, k); cleared++; } catch (_) {}
+          }
+        }
+      }
+
       onStatus && onStatus(`匯入 ${store} (${items.length} 筆)...`);
       for (const item of items) {
         const inflated = await inflateBlobs(item, zip);
-        try { await MediaDB.put(store, inflated); imported++; } catch (e) { console.warn('put failed', store, item, e); }
+        try { await MediaDB.put(store, inflated); imported++; }
+        catch (e) { console.warn('put failed', store, item, e); }
       }
     }
 
-    onStatus && onStatus(`✓ 匯入完成,共 ${imported} 筆。即將重新載入...`);
-    setTimeout(() => location.reload(), 800);
+    const note = strategy === 'replace'
+      ? `(取代:清掉 ${cleared} 筆舊資料)`
+      : '(合併:同 ID 覆蓋)';
+    onStatus && onStatus(`✓ 匯入完成,共 ${imported} 筆 ${note}。即將重新載入...`);
+    setTimeout(() => location.reload(), 1000);
     return true;
   }
 
