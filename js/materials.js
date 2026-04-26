@@ -5,11 +5,21 @@
    ============================================================================= */
 (function () {
   const STORE = 'materials';
-  const CATS_KEY = 'mat-categories';
-  const DEFAULT_CATS = ['凝膠', '亮粉', '飾品', '貼紙', '筆刷', '其他'];
+  const DEFAULTS = {
+    manicure: ['凝膠', '亮粉', '飾品', '貼紙', '筆刷', '其他'],
+    beauty:   ['唇膏', '眼影', '腮紅', '粉底', '眉筆', '睫毛膏', '工具', '其他'],
+  };
+  function catsKey() {
+    const m = window.AppMode ? AppMode.get() : 'manicure';
+    return `mat-categories-${m}`;
+  }
+  function defaultCats() {
+    const m = window.AppMode ? AppMode.get() : 'manicure';
+    return DEFAULTS[m] || DEFAULTS.manicure;
+  }
 
   let _items = [];
-  let _categories = DEFAULT_CATS.slice();
+  let _categories = DEFAULTS.manicure.slice();
   let _filterCat = 'all';
   let _searchTerm = '';
   let _editingId = null;
@@ -42,20 +52,19 @@
     elNoteInput = $('matNote');
     elDeleteBtn = $('matDelete');
 
-    _categories = await MediaDB.getCategoryDef(CATS_KEY, DEFAULT_CATS);
-    // 清掉先前 bug 造成的重複
-    const seen = new Set();
-    const deduped = _categories.filter(c => seen.has(c) ? false : (seen.add(c), true));
-    if (deduped.length !== _categories.length) {
-      _categories = deduped;
-      await MediaDB.setCategoryDef(CATS_KEY, _categories);
-    }
+    await loadCategoriesForCurrentMode();
     _items = await MediaDB.getAll(STORE);
     _items.sort((a, b) => b.updatedAt - a.updatedAt);
 
     bindUI();
     renderChips();
     renderGrid();
+  }
+
+  async function loadCategoriesForCurrentMode() {
+    _categories = await MediaDB.getCategoryDef(catsKey(), defaultCats());
+    const seen = new Set();
+    _categories = _categories.filter(c => seen.has(c) ? false : (seen.add(c), true));
   }
 
   function bindUI() {
@@ -77,7 +86,9 @@
       const id = card.dataset.id;
       if (id) openModal(id);
     });
-    document.addEventListener('app-mode-change', () => {
+    document.addEventListener('app-mode-change', async () => {
+      await loadCategoriesForCurrentMode();
+      _filterCat = 'all';
       renderChips();
       renderGrid();
     });
@@ -116,11 +127,11 @@
       maxLen: 8,
       onAdd: async (name) => {
         _categories.push(name);
-        await MediaDB.setCategoryDef(CATS_KEY, _categories);
+        await MediaDB.setCategoryDef(catsKey(), _categories);
       },
       onDelete: async (name) => {
         { const idx = _categories.indexOf(name); if (idx >= 0) _categories.splice(idx, 1); }
-        await MediaDB.setCategoryDef(CATS_KEY, _categories);
+        await MediaDB.setCategoryDef(catsKey(), _categories);
         const affected = _items.filter(it => it.category === name);
         for (const it of affected) {
           it.category = '未分類';
@@ -223,11 +234,11 @@
       maxLen: 8,
       onAdd: async (name) => {
         _categories.push(name);
-        await MediaDB.setCategoryDef(CATS_KEY, _categories);
+        await MediaDB.setCategoryDef(catsKey(), _categories);
       },
       onDelete: async (name) => {
         { const idx = _categories.indexOf(name); if (idx >= 0) _categories.splice(idx, 1); }
-        await MediaDB.setCategoryDef(CATS_KEY, _categories);
+        await MediaDB.setCategoryDef(catsKey(), _categories);
         const affected = _items.filter(it => it.category === name);
         for (const it of affected) {
           it.category = '未分類';

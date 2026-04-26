@@ -242,6 +242,7 @@ function switchView(name) {
   window.scrollTo(0, 0);
 }
 tabbarBtns.forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
+window.switchView = switchView;
 
 /* ========== Library view: 材料 / 靈感 ========== */
 let _libraryInited = false;

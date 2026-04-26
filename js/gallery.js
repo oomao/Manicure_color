@@ -5,14 +5,28 @@
    ============================================================================= */
 (function () {
   const STORE = 'galleryImages';
-  const COLOR_KEY = 'gal-colors';
-  const STYLE_KEY = 'gal-styles';
-  const DEFAULT_COLORS = ['紅', '橘', '黃', '綠', '藍', '紫', '粉', '白', '黑', '金銀', '裸色'];
-  const DEFAULT_STYLES = ['法式', '暈染', '貓眼', '鏡面', '磁鐵', '手繪', '光療', '簡約', '漸層'];
+  const DEFAULT_COLORS_BY_MODE = {
+    manicure: ['紅', '橘', '黃', '綠', '藍', '紫', '粉', '白', '黑', '金銀', '裸色'],
+    beauty:   ['紅', '橘', '裸色', '粉', '紫', '棕', '黑', '咖啡', '酒紅', '珊瑚', '大地'],
+  };
+  const DEFAULT_STYLES_BY_MODE = {
+    manicure: ['法式', '暈染', '貓眼', '鏡面', '磁鐵', '手繪', '光療', '簡約', '漸層'],
+    beauty:   ['日系', '韓系', '歐美', '裸妝', '煙燻', '紅唇', '清透', '復古', '舞台'],
+  };
+  function colorKey() { return `gal-colors-${window.AppMode ? AppMode.get() : 'manicure'}`; }
+  function styleKey() { return `gal-styles-${window.AppMode ? AppMode.get() : 'manicure'}`; }
+  function defaultColors() {
+    const m = window.AppMode ? AppMode.get() : 'manicure';
+    return DEFAULT_COLORS_BY_MODE[m] || DEFAULT_COLORS_BY_MODE.manicure;
+  }
+  function defaultStyles() {
+    const m = window.AppMode ? AppMode.get() : 'manicure';
+    return DEFAULT_STYLES_BY_MODE[m] || DEFAULT_STYLES_BY_MODE.manicure;
+  }
 
   let _items = [];
-  let _colors = DEFAULT_COLORS.slice();
-  let _styles = DEFAULT_STYLES.slice();
+  let _colors = defaultColors().slice();
+  let _styles = defaultStyles().slice();
   let _filterColor = 'all';
   let _filterStyle = 'all';
   let _editingId = null;
@@ -56,8 +70,8 @@
     elNewStyleBtn = $('galNewStyleBtn');
     elManageColorBtn = $('galManageColorBtn');
 
-    _colors = await MediaDB.getCategoryDef(COLOR_KEY, DEFAULT_COLORS);
-    _styles = await MediaDB.getCategoryDef(STYLE_KEY, DEFAULT_STYLES);
+    _colors = await MediaDB.getCategoryDef(colorKey(), defaultColors());
+    _styles = await MediaDB.getCategoryDef(styleKey(), defaultStyles());
     // 清掉先前 bug 造成的重複
     const dedupe = (arr) => {
       const seen = new Set();
@@ -65,8 +79,8 @@
     };
     const dc = dedupe(_colors);
     const ds = dedupe(_styles);
-    if (dc.length !== _colors.length) { _colors = dc; await MediaDB.setCategoryDef(COLOR_KEY, _colors); }
-    if (ds.length !== _styles.length) { _styles = ds; await MediaDB.setCategoryDef(STYLE_KEY, _styles); }
+    if (dc.length !== _colors.length) { _colors = dc; await MediaDB.setCategoryDef(colorKey(), _colors); }
+    if (ds.length !== _styles.length) { _styles = ds; await MediaDB.setCategoryDef(styleKey(), _styles); }
     _items = await MediaDB.getAll(STORE);
     _items.sort((a, b) => b.updatedAt - a.updatedAt);
 
@@ -89,7 +103,11 @@
       const card = e.target.closest('.lib-card');
       if (card && card.dataset.id) openModal(card.dataset.id);
     });
-    document.addEventListener('app-mode-change', () => {
+    document.addEventListener('app-mode-change', async () => {
+      _colors = await MediaDB.getCategoryDef(colorKey(), defaultColors());
+      _styles = await MediaDB.getCategoryDef(styleKey(), defaultStyles());
+      _filterColor = 'all';
+      _filterStyle = 'all';
       renderFilterChips();
       renderGrid();
     });
@@ -142,11 +160,11 @@
       maxLen: 6,
       onAdd: async (name) => {
         _colors.push(name);
-        await MediaDB.setCategoryDef(COLOR_KEY, _colors);
+        await MediaDB.setCategoryDef(colorKey(), _colors);
       },
       onDelete: async (name) => {
         { const idx = _colors.indexOf(name); if (idx >= 0) _colors.splice(idx, 1); }
-        await MediaDB.setCategoryDef(COLOR_KEY, _colors);
+        await MediaDB.setCategoryDef(colorKey(), _colors);
         const affected = _items.filter(it => getColors(it).includes(name));
         for (const it of affected) {
           if (Array.isArray(it.colorFamilies)) {
@@ -176,11 +194,11 @@
       maxLen: 8,
       onAdd: async (name) => {
         _styles.push(name);
-        await MediaDB.setCategoryDef(STYLE_KEY, _styles);
+        await MediaDB.setCategoryDef(styleKey(), _styles);
       },
       onDelete: async (name) => {
         { const idx = _styles.indexOf(name); if (idx >= 0) _styles.splice(idx, 1); }
-        await MediaDB.setCategoryDef(STYLE_KEY, _styles);
+        await MediaDB.setCategoryDef(styleKey(), _styles);
         const affected = _items.filter(it => Array.isArray(it.styles) && it.styles.includes(name));
         for (const it of affected) {
           it.styles = it.styles.filter(s => s !== name);

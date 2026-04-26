@@ -2514,10 +2514,12 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
 /* 包住 input + placeholder overlay 的容器(JS 動態加上) */
 .plans-date-toolbar .date-wrap {
   position: relative;
+  display: block;
+  width: 100%;
   min-width: 0;
 }
 .plans-date-toolbar .plans-date-input,
-.plans-date-toolbar .date-wrap .plans-date-input {
+.plans-date-toolbar .date-wrap > .plans-date-input {
   flex: none;
   width: 100%;
   min-width: 0;
@@ -2526,16 +2528,27 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
+  color: var(--text);
+  /* 隱藏 input 本身的文字 placeholder 區,讓 overlay 來顯示 */
+}
+/* 沒有值時 input 內顯示文字會被我們的 overlay 蓋掉,讓 input 視覺上是空的 */
+.plans-date-toolbar .date-wrap > .plans-date-input::-webkit-datetime-edit-fields-wrapper {
+  opacity: 1;
 }
 .plans-date-toolbar .date-ph {
   position: absolute;
-  inset: 0;
+  left: 8px;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  padding: 0 8px;
   pointer-events: none;
   color: var(--text-3);
   font-size: 13px;
+  background: var(--surface);
+  padding: 2px 0;
+  z-index: 1;
 }
 .plans-date-toolbar .date-ph[hidden] { display: none !important; }
 .plans-date-toolbar .plans-date-label {
@@ -2701,6 +2714,11 @@ input[type="date"], input[type="time"], input[type="datetime-local"], .input-dat
 [data-app-mode="beauty"] .tabbar-btn { font-weight: 500; letter-spacing: 0.4px; }
 [data-app-mode="beauty"] .tabbar-btn svg { stroke-width: 1.6; }
 [data-app-mode="beauty"] .tabbar-btn.active svg { stroke-width: 2; }
+
+/* 美妝模式 — 隱藏不適用的功能(調色 / 配方 / 作品) */
+[data-app-mode="beauty"] .tabbar-btn[data-view="mix"] { display: none !important; }
+[data-app-mode="beauty"] .tabs-btn[data-rectab="recipes"] { display: none !important; }
+[data-app-mode="beauty"] .tabs-btn[data-rectab="works"] { display: none !important; }
 
 /* 圖庫頁顯示一條 mode 指示條 */
 .lib-mode-stripe {

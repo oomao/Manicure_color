@@ -30,7 +30,30 @@
     renderButtons();
     syncUI();
     notifyChange();
-    if (before !== mode) showToast(`已切換到 ${META[mode].emoji} ${META[mode].name}`);
+    if (before !== mode) {
+      handleHiddenViewRedirect(mode);
+      showToast(`已切換到 ${META[mode].emoji} ${META[mode].name}`);
+    }
+  }
+
+  // 美妝模式不顯示 調色 / 配方 / 作品。若使用者切到美妝時當下停留在這些頁面,
+  // 自動把畫面導去仍可用的位置(圖庫 或 紀錄→計劃)。
+  function handleHiddenViewRedirect(mode) {
+    if (mode !== 'beauty') return;
+    const mixOpen = !document.getElementById('view-mix')?.hidden;
+    if (mixOpen && typeof window.switchView === 'function') {
+      window.switchView('library');
+      return;
+    }
+    const recordOpen = !document.getElementById('view-record')?.hidden;
+    if (recordOpen) {
+      const activeRec = document.querySelector('.record-segmented .tabs-btn.active');
+      const activeRecKey = activeRec && activeRec.dataset.rectab;
+      if (activeRecKey === 'recipes' || activeRecKey === 'works') {
+        const plansBtn = document.querySelector('.record-segmented .tabs-btn[data-rectab="plans"]');
+        if (plansBtn) plansBtn.click();
+      }
+    }
   }
 
   function syncUI() {
@@ -87,6 +110,14 @@
     });
     renderButtons();
     syncUI();
+    // 初始載入若在美妝模式且預設停在 mix view,等下一個 tick 等 switchView 設好,再導去圖庫
+    if (get() === 'beauty') {
+      setTimeout(() => {
+        if (typeof window.switchView === 'function') {
+          if (!document.getElementById('view-mix')?.hidden) window.switchView('library');
+        }
+      }, 0);
+    }
   }
 
   window.AppMode = { init, get, set, modeOf };
