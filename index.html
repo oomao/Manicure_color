@@ -13,6 +13,7 @@
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
 <script src="https://scrtwpns.com/mixbox.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link rel="stylesheet" href="styles.css?v=15">
 <script src="js/theme.js?v=15"></script>
 </head>
@@ -406,14 +407,14 @@
       <svg class="me-entry-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m9 18 6-6-6-6"/></svg>
     </div>
 
-    <!-- 碼表入口 -->
-    <div class="card me-entry-card" id="timerCard">
+    <!-- 備份(匯出 / 匯入)入口 -->
+    <div class="card me-entry-card" id="backupCard">
       <div class="me-entry-icon" style="background: linear-gradient(135deg, #93BFCF, #7AA9BC);">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 1h6M5 4l-1 1M19 4l1 1"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
       </div>
       <div class="me-entry-info">
-        <div class="title">碼表</div>
-        <div class="sub">記錄每個步驟花的時間,可記次(lap)</div>
+        <div class="title">資料備份</div>
+        <div class="sub">匯出 / 匯入 zip 檔(含照片)</div>
       </div>
       <svg class="me-entry-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="m9 18 6-6-6-6"/></svg>
     </div>
@@ -968,6 +969,48 @@
   </div>
 </div>
 
+<!-- ============ MODAL: 資料備份 (匯出 / 匯入) ============ -->
+<div class="modal-overlay" id="backupModal" hidden>
+  <div class="modal" style="max-width: 420px;">
+    <div class="modal-header">
+      <h2 class="modal-title">資料備份</h2>
+      <button class="icon-btn" id="backupClose" aria-label="關閉">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <h4 class="work-detail-section">匯出範圍</h4>
+      <div class="theme-switcher" style="margin-bottom: 4px;">
+        <button class="theme-btn active" data-backup-scope="all">
+          <span class="theme-btn-emoji">📦</span><span>全部</span>
+        </button>
+        <button class="theme-btn" data-backup-scope="manicure">
+          <span class="theme-btn-emoji">💅</span><span>美甲</span>
+        </button>
+        <button class="theme-btn" data-backup-scope="beauty">
+          <span class="theme-btn-emoji">💄</span><span>美妝</span>
+        </button>
+      </div>
+      <div class="hint" style="margin-top:8px;">「全部」會把兩個模式 + 配方 + 計劃 + 作品 + 基底色 全部一起打包。</div>
+
+      <button class="btn btn-primary btn-block" id="backupExportBtn" style="margin-top:18px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        匯出 zip
+      </button>
+      <div class="hint" id="backupExportStatus" style="margin-top:6px; min-height: 16px;"></div>
+
+      <h4 class="work-detail-section" style="margin-top:18px;">匯入</h4>
+      <label class="btn btn-secondary btn-block" for="backupImportFile" style="margin-top:6px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        選擇備份 zip
+      </label>
+      <input type="file" id="backupImportFile" accept=".zip,application/zip" style="display:none;">
+      <div class="hint" id="backupImportStatus" style="margin-top:6px; min-height: 16px;"></div>
+      <div class="hint" style="margin-top:8px;">⚠️ 匯入會覆蓋同 ID 的項目。建議先匯出當前資料保險。</div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ MODAL: 日曆 ============ -->
 <div class="modal-overlay" id="calendarModal" hidden>
   <div class="modal" style="max-width: 460px;">
@@ -1064,6 +1107,7 @@
 <script src="js/plans.js?v=15"></script>
 <script src="js/inspire-picker.js?v=15"></script>
 <script src="js/calendar.js?v=15"></script>
+<script src="js/backup.js?v=15"></script>
 <script src="app.js?v=15"></script>
 </body>
 </html>

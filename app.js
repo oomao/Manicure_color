@@ -331,6 +331,56 @@ function bindMeView() {
     paintActive();
   }));
   paintActive();
+
+  // ===== 資料備份 =====
+  const backupCard = document.getElementById('backupCard');
+  const backupModal = document.getElementById('backupModal');
+  const backupClose = document.getElementById('backupClose');
+  const backupExportBtn = document.getElementById('backupExportBtn');
+  const backupImportFile = document.getElementById('backupImportFile');
+  const backupExportStatus = document.getElementById('backupExportStatus');
+  const backupImportStatus = document.getElementById('backupImportStatus');
+  const scopeBtns = document.querySelectorAll('[data-backup-scope]');
+  let _backupScope = 'all';
+  scopeBtns.forEach(b => b.addEventListener('click', () => {
+    _backupScope = b.dataset.backupScope;
+    scopeBtns.forEach(x => x.classList.toggle('active', x === b));
+  }));
+  backupCard && backupCard.addEventListener('click', () => {
+    if (!window.Backup) { alert('JSZip 載入失敗,備份功能無法使用'); return; }
+    backupExportStatus.textContent = '';
+    backupImportStatus.textContent = '';
+    backupModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+  });
+  function closeBackupModal() {
+    backupModal.hidden = true;
+    document.body.style.overflow = '';
+  }
+  backupClose && backupClose.addEventListener('click', closeBackupModal);
+  backupModal && backupModal.addEventListener('click', (e) => { if (e.target === backupModal) closeBackupModal(); });
+  backupExportBtn && backupExportBtn.addEventListener('click', async () => {
+    backupExportBtn.disabled = true;
+    try {
+      await Backup.exportAll(_backupScope, (msg) => { backupExportStatus.textContent = msg; });
+    } catch (err) {
+      console.warn(err);
+      backupExportStatus.textContent = '✕ 匯出失敗:' + (err.message || err);
+    } finally {
+      backupExportBtn.disabled = false;
+    }
+  });
+  backupImportFile && backupImportFile.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      await Backup.importAll(file, (msg) => { backupImportStatus.textContent = msg; });
+    } catch (err) {
+      console.warn(err);
+      backupImportStatus.textContent = '✕ 匯入失敗:' + (err.message || err);
+    }
+  });
 }
 function refreshMeView() {
   // 顯示已啟用基底色數量

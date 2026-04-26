@@ -79,16 +79,32 @@
 - 印刷色偏會被「相對校正」自動扣掉(因為比對的是「拍到 vs 印出來給螢幕看的目標」,所以印刷誤差兩邊都有)
 - 凝膠的鏡面反射 / 半透明 / 固化變深仍無法修正(物理問題,非顏色映射可解)
 
+### 美甲 / 美妝 雙模式
+- 我的 → 使用模式 切換 💅 美甲 / 💄 美妝
+- 切過去後**整套設計感都換掉**(色票、字體、卡片圓角、tab 線條)
+  - 美甲:暖米 `#FAF6F2` + 玫瑰粉 `#C25B7C` + SF Pro 黑體 + 16px 圓角
+  - 美妝:奶油桃 `#FAF1EA` + 莓果紫 `#8E3A60` + Noto Serif TC 襯線 + 6px 圓角
+- 兩個模式各自的**材料分類** / **靈感色系** / **靈感風格** 完全分開,
+  互不干擾;都有對應的預設值
+- 美妝模式只露出 圖庫 + 我的(調色 / 紀錄 都不適用,自動隱藏)
+
+### 資料備份(我的 → 資料備份)
+- 一鍵匯出整個 App 資料為 zip 檔(含照片)
+- 匯出範圍可選:**全部** / 只匯出 **美甲** / 只匯出 **美妝**
+- 匯入會把同 ID 的項目覆蓋(會先 confirm 提示)
+- zip 結構:`manifest.json` + `localStorage.json` + `indexeddb/{store}.json` + `blobs/`
+
 ### 其他
 - **首頁 Home Hero**:時段問候 + 調色盤狀態 + 動作卡 + 最近收藏 rail + 小知識
 - 自訂基底色(最多 8 色,圖片採樣或 hex 輸入,可調染色力)
-- 碼表(count-up + 計次/lap,記每個塗布步驟花的時間)
 - **主題切換**:淺色 / 深色 / 自動(跟隨系統),同步影響 iOS 狀態列顏色
+- **PWA icon**:玫瑰金水滴 master,加入主畫面後是正式的 app icon
 
 ### 資料儲存
-- 基底色 / 配方 → `localStorage`(輕量 JSON)
-- 材料 / 靈感 / 作品(含照片 Blob)→ `IndexedDB`
+- 基底色 / 配方 / 模式類別 → `localStorage`(輕量 JSON)
+- 材料 / 靈感 / 計劃 / 作品(含照片 Blob)→ `IndexedDB`
 - 全部存瀏覽器本機,**不上傳任何伺服器**,僅單一裝置 / 單一瀏覽器可見
+- 透過匯出 / 匯入功能跨裝置搬移
 
 ---
 
@@ -126,26 +142,30 @@ ISO 787-24 量到的染色力:Carbon Black 約是 Bone Black 的 2–3 倍。同
 
 ## 技術 / 檔案結構
 
-無框架、無 build、零外部依賴(只有 Mixbox.js 透過 CDN)。
+無框架、無 build、CDN 依賴只有兩個:Mixbox.js(混色)+ JSZip(備份)。
 
 ```
 .
-├── index.html         結構:4 個 view + sub-pane + 各功能 modal + tabbar
-├── styles.css         樣式:暖米 + 玫瑰金主題 / 淺暗 2 模式 / 響應式
-├── app.js             主邏輯:mixbox / CIEDE2000 / 搜尋 / 配方收藏 /
-│                      Home Hero / tabbar / 我的 view / 碼表 整合
+├── index.html             4 個 view + sub-pane + 各功能 modal + tabbar
+├── styles.css             暖米 + 玫瑰金主題 / 淺暗 2 模式 / 美甲vs美妝 雙設計感
+├── app.js                 主邏輯:mixbox / CIEDE2000 / 搜尋 / 配方收藏 /
+│                          Home Hero / tabbar / 我的 view / 備份 wiring
+├── manifest.webmanifest   PWA manifest
+├── assets/                icon.svg + 180/192/512 PNG + apple-touch-icon
 └── js/
     # 系統 / 通用
     ├── theme.js          淺色 / 深色 / 自動 主題切換
+    ├── app-mode.js       美甲 / 美妝 模式切換,寫 localStorage,觸發 event
     ├── calibration.js    色彩校正:6-patch 線性最小二乘 → 3×3 矩陣
     ├── media-db.js       IndexedDB 薄封裝
     │                     (materials / galleryImages / works / plans / categoryDefs)
     ├── img-utils.js      圖片 resize + 縮圖,處理成 Blob
     ├── cat-manager.js    共用「分類管理」modal(新增 / 刪除類別)
+    └── backup.js         匯出 / 匯入 zip(含 Blob),範圍可選 all/manicure/beauty
 
     # 圖庫(視覺資料庫)
-    ├── materials.js      材料庫頁面(自訂分類)
-    ├── gallery.js        美甲靈感頁面(色系 + 風格 雙軸分類)
+    ├── materials.js      材料庫頁面(自訂分類,分模式預設值)
+    ├── gallery.js        靈感圖庫(色系 + 風格 雙軸分類,可複選色系)
     ├── inspire-picker.js 從靈感圖庫挑圖載入調色 canvas
 
     # 紀錄(我做過 / 要做)
@@ -183,9 +203,11 @@ python -m http.server 8080
 - [x] 月曆檢視(標記計劃 / 作品日期)
 - [x] 步驟支援多組調色配方
 - [x] 靈感色系可複選
+- [x] 美甲 / 美妝 雙模式(含完全不同的視覺體系 + 模式專屬預設)
+- [x] PWA icon + manifest(支援加入主畫面)
+- [x] 資料匯出 / 匯入(zip,含照片,可選範圍)
 - [ ] 校色卡完整版(自動偵測色卡 fiducial markers,免手動點)
-- [ ] PWA 離線支援
-- [ ] 圖庫匯出 / 匯入備份(.zip)
+- [ ] PWA 離線支援(service worker)
 - [ ] 從作品紀錄反查「這個材料用在哪幾次作品」
 
 ## Disclaimer
