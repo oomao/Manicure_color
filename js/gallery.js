@@ -320,8 +320,7 @@
     try {
       const r = await ImgUtils.processFile(file);
       _stagedImg = { fullBlob: r.fullBlob, thumbBlob: r.thumbBlob };
-      const url = URL.createObjectURL(r.thumbBlob);
-      elPreview.innerHTML = `<img src="${url}" alt="">`;
+      elPreview.innerHTML = `<img src="${ImgUtils.urlFor(r.thumbBlob)}" alt="">`;
     } catch (err) {
       console.warn('process file failed', err);
       elPreview.innerHTML = '<div class="lib-preview-empty">圖片處理失敗</div>';

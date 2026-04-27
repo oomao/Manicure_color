@@ -172,8 +172,9 @@
       });
     }
     if (_dateFrom || _dateTo) {
-      const fromTs = _dateFrom ? new Date(_dateFrom).getTime() : -Infinity;
-      const toTs   = _dateTo   ? new Date(_dateTo).getTime() + 24*60*60*1000 - 1 : Infinity;
+      // 'YYYY-MM-DD' 用本地時區解讀(預設會被當 UTC midnight,造成 UTC+8 凌晨建立的記錄被排除)
+      const fromTs = _dateFrom ? new Date(_dateFrom + 'T00:00:00').getTime() : -Infinity;
+      const toTs   = _dateTo   ? new Date(_dateTo   + 'T23:59:59.999').getTime() : Infinity;
       list = list.filter(it => {
         const t = it.date || it.createdAt || 0;
         return t >= fromTs && t <= toTs;
@@ -286,8 +287,7 @@
   function renderCoverPreview() {
     const blob = _draft._coverThumbBlob || _draft._coverBlob;
     if (blob) {
-      const url = URL.createObjectURL(blob);
-      elCoverPreview.innerHTML = `<img src="${url}" alt="">`;
+      elCoverPreview.innerHTML = `<img src="${ImgUtils.urlFor(blob)}" alt="">`;
     } else {
       elCoverPreview.innerHTML = '<div class="lib-preview-empty">點下方「選擇封面照」</div>';
     }
@@ -352,7 +352,7 @@
 
   function stepHtml(s, i) {
     const photoBlob = s._photoThumbBlob || s._photoBlob;
-    const photoUrl = photoBlob ? URL.createObjectURL(photoBlob) : '';
+    const photoUrl = photoBlob ? ImgUtils.urlFor(photoBlob) : '';
     const matChips = _materials.map(m => {
       const active = (s.materialIds || []).includes(m.id) ? ' active' : '';
       return `<button type="button" class="chip chip-pick step-mat-chip${active}" data-mat="${escapeAttr(m.id)}" data-step="${i}">${escapeHtml(m.name || '?')}</button>`;
@@ -590,7 +590,7 @@
     await reloadDeps();
     elDetailModal.dataset.workId = id;
 
-    const coverUrl = it.coverBlob ? URL.createObjectURL(it.coverBlob) : (it.coverThumbBlob ? URL.createObjectURL(it.coverThumbBlob) : '');
+    const coverUrl = it.coverBlob ? ImgUtils.urlFor(it.coverBlob) : (it.coverThumbBlob ? ImgUtils.urlFor(it.coverThumbBlob) : '');
     const dateStr = it.date ? formatDate(it.date) : '';
     const stepsHtml = (it.steps || []).map((s, i) => detailStepHtml(s, i)).join('');
 
@@ -631,7 +631,7 @@
 
   function detailStepHtml(s, i) {
     const photoBlob = s.photoBlob || s.photoThumbBlob;
-    const photoUrl = photoBlob ? URL.createObjectURL(photoBlob) : '';
+    const photoUrl = photoBlob ? ImgUtils.urlFor(photoBlob) : '';
     const recipes = getRecipes(s);
     let recipeBlock = '';
     if (recipes.length) {

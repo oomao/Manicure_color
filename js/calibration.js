@@ -75,7 +75,7 @@
     };
   }
 
-  function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+  function clamp255(v) { if (!isFinite(v)) v = 0; return Math.max(0, Math.min(255, Math.round(v))); }
 
   function applyToRgb(rgb, cal) {
     if (!cal || !cal.enabled) return rgb.slice();

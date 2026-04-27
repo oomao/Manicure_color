@@ -213,7 +213,7 @@
     if (!it || it.status !== 'active') return 0;
     const acc = it.accumulatedMs || 0;
     if (it.timerPaused) return acc;
-    if (it.timerStartedAt) return acc + (Date.now() - it.timerStartedAt);
+    if (it.timerStartedAt) return acc + Math.max(0, Date.now() - it.timerStartedAt);
     return acc;
   }
 
@@ -229,8 +229,9 @@
     }
     if (_dateFrom || _dateTo) {
       const ts = it.scheduledDate || it.planDate || it.createdAt || 0;
-      const fromTs = _dateFrom ? new Date(_dateFrom).getTime() : -Infinity;
-      const toTs   = _dateTo   ? new Date(_dateTo).getTime() + 24*60*60*1000 - 1 : Infinity;
+      // 'YYYY-MM-DD' 用本地時區解讀(預設會被當 UTC midnight,造成 UTC+8 凌晨建立的記錄被排除)
+      const fromTs = _dateFrom ? new Date(_dateFrom + 'T00:00:00').getTime() : -Infinity;
+      const toTs   = _dateTo   ? new Date(_dateTo   + 'T23:59:59.999').getTime() : Infinity;
       if (ts < fromTs || ts > toTs) return false;
     }
     return true;
